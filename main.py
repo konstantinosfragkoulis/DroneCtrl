@@ -163,7 +163,13 @@ def RPMtoThrottle(rpm: int):
     # TODO: Implement a better conversion function
     # Find the RPM at which the drone hovers
     # Find the maximum RPM
-    return int(rc_utils.remap_range(rpm, 0, 40000, -32768, 32767, True))
+    # y=39.772x-37948.1
+    # y -> RPM
+    # x -> Throttle
+    # solve for x
+    # x = (y + 37948.1) / 39.772
+    return int((rpm + 37948.1) / 39.772)
+    #return int(rc_utils.remap_range(rpm, 0, 40000, -32768, 32767, True))
 
 def passValues(*inputs):
     """Passes the given values to the shared memory, effectively transmitting them to the drone."""
@@ -199,20 +205,24 @@ def CalculateTakeoff(h: float, t: float):
 
     a1 = (3 * h)/(t ** 2)
     takeoffThrust1 = WEIGHT * (a1 + G)
-    takeoffThrottle1 = RPMtoThrottle(ThrustToRPM(takeoffThrust1))
+    takeoffRPM1 = ThrustToRPM(takeoffThrust1)
+    takeoffThrottle1 = RPMtoThrottle(takeoffRPM1)
     u1 = (2 * a1 * t)/3
 
     a2  = -3 * u1/t
     takeoffThrust2 = WEIGHT * (a2 + G)
-    takeoffThrottle2 = RPMtoThrottle(ThrustToRPM(takeoffThrust2))
+    takeoffRPM2 = ThrustToRPM(takeoffThrust2)
+    takeoffThrottle1 = RPMtoThrottle(takeoffRPM2)
 
     print("a1: ", a1)
     print("u1: ", u1)
     print("T1: ", takeoffThrust1)
+    print("RPM1: ", takeoffRPM1)
     print("Throttle1: ", takeoffThrottle1)
 
     print("a2: ", a2)
     print("T2: ", takeoffThrust2)
+    print("RPM2: ", takeoffRPM2)
     print("Throttle2: ", takeoffThrottle2)
 
     print("\n")
