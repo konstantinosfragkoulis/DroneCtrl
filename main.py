@@ -157,7 +157,7 @@ def ThrustToRPM(thrust: float):
     return int((math.sqrt(thrust)) * const2)
 
 def RPMtoThrottle(rpm: int):
-    """Converts the RPM of the drone to a throttle value that can be passed to the shared memory."""
+    """Converts the RPM of a motor to a throttle value that can be passed to the shared memory."""
     # TODO: Implement a better conversion function
     # Find the RPM at which the drone hovers
     # Find the maximum RPM
