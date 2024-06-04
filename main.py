@@ -109,7 +109,6 @@ takeoffThrust2: float = 0
 takeoffThrottle1: int = 0
 takeoffThrottle2: int = 0
 
-const = (PI * 1.225 * (0.0762**2) * 0.0635) / (360000 * 4) # * (RPM**2)
 
 def cleanup():
     global running
@@ -144,18 +143,16 @@ def handle_signal(signum, frame):
     print(f"\nDetected signal {signum}!\nCleaning up...")
     cleanup()
 
+const = (PI * 1.225 * (0.0762**2) * 0.0635) / (360000 * 4) # * (RPM**2)
 # Simplified thrust formula: T = (pi * rho * D^2 * n^2 * P) / 4
 def Thrust(rpm: int):
-    """Calculates the thrust produced by the drone at a given RPM.
-    This function uses a simplified thrust formula for each propeller: T = (pi * rho * D^2 * n^2 * P) / 4"""
+    """Calculates the thrust produced by a motor spinning at a given RPM."""
     global const
     return const * (rpm ** 2)
 
 const2 = math.sqrt((4 * 100 * 3600) / (PI * 1.225 * (0.0762 ** 2) * 0.0635)) # * sqrt(RPM)
-
 def ThrustToRPM(thrust: float):
-    """Calculates the RPM needed to produce a given thrust by the drone.
-    This function uses a simplified thrust formula for each propeller: T = (pi * rho * D^2 * n^2 * P) / 4"""
+    """Calculates the RPM of a motor needed to produce the given thrust by it."""
     global const2
     return int((math.sqrt(thrust)) * const2)
 
