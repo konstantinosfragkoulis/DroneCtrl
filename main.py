@@ -60,7 +60,7 @@ TRUEMAXTHRUST = 5.74 # MAXTHRUST + WEIGHT_N
 ##############  USER EDITABLE VARIABLES - START  ##############
 ###############################################################
 
-TAKEOFF_TIME = 4 # The time it takes for the drone to take off
+TAKEOFF_TIME = 2 # The time it takes for the drone to take off
 TAKEOFF_HEIGHT = 1 # The height the drone will take off to
 WEIGHT = 0.28 # 280 grams
 
@@ -74,6 +74,7 @@ TAKEOFF_TIME1 = 2 * TAKEOFF_TIME / 3
 TAKEOFF_TIME2 = TAKEOFF_TIME / 3
 WEIGHT_N = WEIGHT * G # The weight of the drone in Newtons
 HOVER_THRUST = WEIGHT_N # The thrust needed to hover
+HOVER_THRUST_MOTOR = HOVER_THRUST / 4 # The thrust needed to hover per motor
 
 
 
@@ -108,7 +109,7 @@ takeoffThrust2: float = 0
 takeoffThrottle1: int = 0
 takeoffThrottle2: int = 0
 
-const = (PI * 1.225 * (0.0762**2) * 0.0635) / 3600 # * (RPM**2)
+const = (PI * 1.225 * (0.0762**2) * 0.0635) / (360000 * 4) # * (RPM**2)
 
 def cleanup():
     global running
@@ -150,13 +151,13 @@ def Thrust(rpm: int):
     global const
     return const * (rpm ** 2)
 
-const2 = (PI * 1.225 * (0.0762 ** 2) * 0.0635) / 2400 # * (RPM**2)
+const2 = math.sqrt((4 * 100 * 3600) / (PI * 1.225 * (0.0762 ** 2) * 0.0635)) # * sqrt(RPM)
 
 def ThrustToRPM(thrust: float):
     """Calculates the RPM needed to produce a given thrust by the drone.
     This function uses a simplified thrust formula for each propeller: T = (pi * rho * D^2 * n^2 * P) / 4"""
     global const2
-    return int(math.sqrt((thrust / 4) / const2))
+    return int((math.sqrt(thrust)) * const2)
 
 def RPMtoThrottle(rpm: int):
     """Converts the RPM of the drone to a throttle value that can be passed to the shared memory."""
@@ -204,15 +205,15 @@ def CalculateTakeoff(h: float, t: float):
     global takeoffThrottle2
 
     a1 = (3 * h)/(t ** 2)
-    takeoffThrust1 = WEIGHT * (a1 + G)
-    takeoffRPM1 = ThrustToRPM(takeoffThrust1)
+    takeoffThrust1 = WEIGHT * (a1 + G) / G # Divide by G to get the thrust in kg
+    takeoffRPM1 = ThrustToRPM(takeoffThrust1/4) # Thrust per motor
     takeoffThrottle1 = RPMtoThrottle(takeoffRPM1)
     u1 = (2 * a1 * t)/3
 
     a2  = -3 * u1/t
-    takeoffThrust2 = WEIGHT * (a2 + G)
-    takeoffRPM2 = ThrustToRPM(takeoffThrust2)
-    takeoffThrottle1 = RPMtoThrottle(takeoffRPM2)
+    takeoffThrust2 = WEIGHT * (a2 + G) / G # Divide by G to get the thrust in kg
+    takeoffRPM2 = ThrustToRPM(takeoffThrust2/4) # Thrust per motor
+    takeoffThrottle2 = RPMtoThrottle(takeoffRPM2)
 
     print("a1: ", a1)
     print("u1: ", u1)
@@ -238,7 +239,8 @@ def Takeoff(takeoffStage: int):
         logging.debug(f"\tInvalid takeoff stage {takeoffStage}. Must be 1 or 2")
 
 def Hover():
-    passValues(0, 0, 0, RPMtoThrottle(ThrustToRPM(HOVER_THRUST)), 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    # TODO: Optimize: Don't calculate the RPM every time
+    passValues(0, 0, 0, RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR)), 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 def control(speed, angle, height):
     pass
@@ -373,8 +375,8 @@ def Update():
                 state = State.Grounded
                 
         elif state == State.Grounded:
-            print(rc_utils.remap_range(RPMtoThrottle(10000), -32768, 32767, 1000, 2000, True))
-            print(RPMtoThrottle(10000))
+            # print(rc_utils.remap_range(RPMtoThrottle(10000), -32768, 32767, 1000, 2000, True))
+            # print(RPMtoThrottle(10000))
             if cv.waitKey(1) == ord('w'):
                 state = State.TakingOff
                 takeoffCnt = 0
