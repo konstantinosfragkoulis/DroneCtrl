@@ -56,17 +56,19 @@ MAXTHRUST = 2.94 # ΣF = m * a => T - w = m * a => T = m * a + w =>
 TRUEMAXTHRUST = 5.74 # MAXTHRUST + WEIGHT_N
 
 
-###############################################################
-##############  USER EDITABLE VARIABLES - START  ##############
-###############################################################
+#################################################################
+###############  USER EDITABLE VARIABLES - START  ###############
+#################################################################
 
 TAKEOFF_TIME = 2 # The time it takes for the drone to take off
 TAKEOFF_HEIGHT = 1 # The height the drone will take off to
-WEIGHT = 0.28 # 280 grams
+WEIGHT = 0.8 # actual weight is 300 grams but Thrust(),
+                # ThrustToRPM() and RPMtoThrottle() are not very
+                # accurate
 
-###############################################################
-###############  USER EDITABLE VARIABLES - END  ###############
-###############################################################
+#################################################################
+################  USER EDITABLE VARIABLES - END  ################
+#################################################################
 
 
 
@@ -156,18 +158,10 @@ def ThrustToRPM(thrust: float):
     global const2
     return int((math.sqrt(thrust)) * const2)
 
+# TODO: optimize constants which are calculated every time
 def RPMtoThrottle(rpm: int):
     """Converts the RPM of a motor to a throttle value that can be passed to the shared memory."""
-    # TODO: Implement a better conversion function
-    # Find the RPM at which the drone hovers
-    # Find the maximum RPM
-    # y=39.772x-37948.1
-    # y -> RPM
-    # x -> Throttle
-    # solve for x
-    # x = (y + 37948.1) / 39.772
-    return int((rpm + 37948.1) / 39.772)
-    #return int(rc_utils.remap_range(rpm, 0, 40000, -32768, 32767, True))
+    return int(270782500 + (970.5814 - 270782500)/(1 + (rpm/10196720000)**1.011358))
 
 def passValues(*inputs):
     """Passes the given values to the shared memory, effectively transmitting them to the drone."""
@@ -217,11 +211,13 @@ def CalculateTakeoff(h: float, t: float):
     print("T1: ", takeoffThrust1)
     print("RPM1: ", takeoffRPM1)
     print("Throttle1: ", takeoffThrottle1)
+    print("Predicted thrust at takeoff 1: ", Thrust(takeoffRPM1) * 4)
 
     print("a2: ", a2)
     print("T2: ", takeoffThrust2)
     print("RPM2: ", takeoffRPM2)
     print("Throttle2: ", takeoffThrottle2)
+    print("Predicted thrust at takeoff 2: ", Thrust(takeoffRPM2) * 4)
 
     print("\n")
 
@@ -362,6 +358,9 @@ def Update():
     else:
         cv.imshow("frame", image)
         print("dt: ", dt)
+        print(RPMtoThrottle(14000))
+        print(Thrust(14000)*4)
+        
 
 
 
