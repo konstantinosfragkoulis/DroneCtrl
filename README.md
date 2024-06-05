@@ -30,10 +30,10 @@ Or you can run ```python3 main.py -v``` to log debug messages.
 ## Features
 Currently, not much works. All you can do is:
 - Automatic takeoff
+- Automatic landing
 
 ## Future Features
 The following features are planned to be implemented:
-- Automatic landing
 - Stabilized hover
 - Object tracking
 - Path planning
