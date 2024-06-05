@@ -1,6 +1,6 @@
 # Dronectrl
 
-DroneCtrl is a Python program for controlling and programming autonomous drones. It is designed to be easy to use and to work with a almost all FPV drones.
+DroneCtrl is a Python program for controlling and programming autonomous drones. It is designed to be easy to use and to work with almost all FPV drones.
 
 It is built to work with [ELRS Joystic Control](https://github.com/kaack/elrs-joystick-control), an awesome project that allows you to control your ELRS FPV drone from your computer using a joystick. In order for the two programs to communicate, I have modified ELRS Joystick Control, and you can get my fork [here](https://github.com/konfrag4/elrs-joystick-control).
 
