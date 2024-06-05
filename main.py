@@ -127,7 +127,6 @@ angle = 0 # Turn left or right
 vertical = 0 # Move up or down
 
 height = 0 # The calculated height of the drone
-speed = 0 # The calculated speed of the drone
 
 image = None # The current image from the camera
 
@@ -140,8 +139,7 @@ takeoffThrottle1: int = 0
 takeoffThrottle2: int = 0
 
 landingCnt = 0
-landingThrust1: float = 0
-landingThrust2: float = 0
+landingThrust: float = 0
 landingThrottle1: int = 0
 landingThrottle2: int = 0
 
@@ -624,13 +622,12 @@ def RPMtoThrottle(rpm: int):
 
 
 #################################################################
-##################  TAKEOFF FUNCTIONS - START  ##################
+############  TAKEOFF AND LANDING FUNCTIONS - START  ############
 #################################################################
 def CalculateTakeoff(h: float, t: float):
     """Calculates the thrust needed for the drone to take off to a given
     height `h` in a given time `t`.""" 
     global height
-    global speed
     global takeoffThrust1
     global takeoffThrust2
     global takeoffThrottle1
@@ -647,18 +644,20 @@ def CalculateTakeoff(h: float, t: float):
     takeoffRPM2 = ThrustToRPM(takeoffThrust2/4) # Thrust per motor
     takeoffThrottle2 = RPMtoThrottle(takeoffRPM2)
 
-    print("a1: ", a1)
-    print("u1: ", u1)
-    print("T1: ", takeoffThrust1)
-    print("RPM1: ", takeoffRPM1)
-    print("Throttle1: ", takeoffThrottle1)
-    print("Predicted thrust at takeoff 1: ", Thrust(takeoffRPM1) * 4)
+    print("Takeoff acceleration: ", a1)
+    print("Takeoff speed: ", u1)
+    print("Takeoff Thrust: ", takeoffThrust1)
+    print("Takeoff RPM: ", takeoffRPM1)
+    print("Takeoff Throttle: ", takeoffThrottle1)
+    print("Predicted thrust at takeoff: ", Thrust(takeoffRPM1) * 4)
+    
+    print("\n")
 
-    print("a2: ", a2)
-    print("T2: ", takeoffThrust2)
-    print("RPM2: ", takeoffRPM2)
-    print("Throttle2: ", takeoffThrottle2)
-    print("Predicted thrust at takeoff 2: ", Thrust(takeoffRPM2) * 4)
+    print("Takeoff acceleration: ", a2)
+    print("Takeoff Thrust: ", takeoffThrust2)
+    print("Takeoff RPM: ", takeoffRPM2)
+    print("Takeoff Throttle: ", takeoffThrottle2)
+    print("Predicted thrust at takeoff: ", Thrust(takeoffRPM2) * 4)
 
     print("\n")
 
@@ -671,8 +670,34 @@ def Takeoff(takeoffStage: int):
         passValues(0, 0, 0, takeoffThrottle2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     else:
         logging.debug(f"\tInvalid takeoff stage {takeoffStage}. Must be 1 or 2")
+
+# TODO: Actually calculate landing thrust
+def CalculateLanding():
+    """Calculates the thrust needed for the drone to land relatively slowly.""" 
+    global landingThrottle1
+    global landingThrottle2
+
+    # landingThrottle1 = RPMtoThrottle(ThrustToRPM(WEIGHT_N/4))
+    # landingThrottle2 = RPMtoThrottle(ThrustToRPM(WEIGHT_N/4))
+
+    landingThrottle1 = 1220
+    landingThrottle2 = 1260
+
+    print("Landing Throttle 1: ", landingThrottle1)
+    print("Landing Throttle 2: ", landingThrottle2)
+    print("\n")
+
+def Land(landingStage: int):
+    global landingThrottle1
+    global landingThrottle2
+    if landingStage == 1:
+        passValues(0, 0, 0, landingThrottle1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    elif landingStage == 2:
+        passValues(0, 0, 0, landingThrottle2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    else:
+        logging.debug(f"\tInvalid landing stage {landingStage}. Must be 1 or 2")
 #################################################################
-###################  TAKEOFF FUNCTIONS - END  ###################
+#############  TAKEOFF AND LANDING FUNCTIONS - END  #############
 #################################################################
 
 
@@ -682,9 +707,6 @@ def Takeoff(takeoffStage: int):
 def Hover():
     # TODO: Optimize: Don't calculate the RPM every time
     passValues(0, 0, 0, RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR)), 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
-def control(speed, angle, height):
-    pass
 
 def findContour(image, *colors):
     contours = []
@@ -704,7 +726,6 @@ def findContour(image, *colors):
 
 def followHoops():
     global image
-    global speed
     global angle
     global height
     
@@ -800,6 +821,8 @@ def Update():
     global takeoffThrottle2
 
     global landingCnt
+    global landingThrottle1
+    global landingThrottle2
 
     ret, image = cap.read()
     if not ret:
@@ -809,8 +832,6 @@ def Update():
     else:
         cv.imshow("frame", image)
         print("dt: ", dt)
-        print(RPMtoThrottle(14000))
-        print(Thrust(14000)*4)
         
 
 
@@ -820,6 +841,7 @@ def Update():
             if cv.waitKey(1) == ord('r'):
                 Arm()
                 state = State.Grounded
+                print("Armed")
                 
         elif state == State.Grounded:
             # print(rc_utils.remap_range(RPMtoThrottle(10000), -32768, 32767, 1000, 2000, True))
@@ -828,6 +850,12 @@ def Update():
                 state = State.TakingOff
                 takeoffCnt = 0
                 print("Taking off...")
+            
+            # TODO: Fix this, it doesn't detect the key press
+            if cv.waitKey(1) == ord('r'):
+                Disarm()
+                state = State.Disarmed
+                print("Disarmed")
 
         elif state == State.TakingOff:
             if takeoffThrust1 == 0 or takeoffThrust2 == 0:
@@ -858,13 +886,26 @@ def Update():
                 print("Landing...")
 
         elif state == State.Landing:
-            # Land
-            pass
+            if landingThrottle1 == 0 or landingThrottle2 == 0:
+                logging.debug("\tLanding thrust not calculated yet")
+                logging.debug("\tCalculating landing thrust...")
+                CalculateLanding()
+                logging.debug("\tLanding thrust calculated")
+                logging.debug("\tStarting landing...\n")
+            if landingCnt < 0.5:
+                Land(1)
+            elif landingCnt < 2:
+                Land(2)
+            else:
+                state = State.Grounded
+                print("Landed")
             
+            landingCnt += dt
 
         
 
 
+        # TODO: Fix this, it doesn't detect the key press sometimes (when waiting for other keypress in the loop)
         if cv.waitKey(1) == ord('q'):
             running = False
 
