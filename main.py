@@ -835,23 +835,21 @@ def Update():
         print("dt: ", dt)
         
 
-
+        keyPressed = cv.waitKey(1)
 
 
         if state == State.Disarmed:
-            if cv.waitKey(1) == ord('r'):
+            if keyPressed == ord('r'):
                 Arm()
                 state = State.Grounded
                 print("Armed")
                 
         elif state == State.Grounded:
-            if cv.waitKey(1) == ord('w'):
+            if keyPressed == ord('w'):
                 state = State.TakingOff
                 takeoffCnt = 0
                 print("Taking off...")
-            
-            # TODO: Fix this, it doesn't detect the key press
-            if cv.waitKey(1) == ord('r'):
+            elif keyPressed == ord('r'):
                 Disarm()
                 state = State.Disarmed
                 print("Disarmed")
@@ -877,7 +875,7 @@ def Update():
 
         elif state == State.Flying:
             # Fly
-            if cv.waitKey(1) == ord('s'):
+            if keyPressed == ord('s'):
                 state = State.Landing
                 landingCnt = 0
                 print("Landing...")
@@ -903,8 +901,7 @@ def Update():
 
 
 
-        # TODO: Fix this, it doesn't detect the key press sometimes (when waiting for other keypress in the loop)
-        if cv.waitKey(1) == ord('q'):
+        if keyPressed == ord('q'):
             running = False
 
 
