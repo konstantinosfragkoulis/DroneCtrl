@@ -707,6 +707,7 @@ def Land(landingStage: int):
 def Hover():
     # TODO: Optimize: Don't calculate the RPM every time
     passValues(0, 0, 0, RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR)), 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    print("Hovering with throttle: ", RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR)))
 
 def findContour(image, *colors):
     contours = []
@@ -844,8 +845,6 @@ def Update():
                 print("Armed")
                 
         elif state == State.Grounded:
-            # print(rc_utils.remap_range(RPMtoThrottle(10000), -32768, 32767, 1000, 2000, True))
-            # print(RPMtoThrottle(10000))
             if cv.waitKey(1) == ord('w'):
                 state = State.TakingOff
                 takeoffCnt = 0
@@ -865,10 +864,8 @@ def Update():
                 logging.debug("\tTakeoff thrust calculated")
                 logging.debug("\tStarting takeoff...\n")
             elif takeoffCnt < TAKEOFF_TIME1:
-                # Takeoff
                 Takeoff(1)
             elif takeoffCnt < TAKEOFF_TIME:
-                # Takeoff
                 Takeoff(2)
             else:
                 state = State.Flying
@@ -903,6 +900,7 @@ def Update():
             landingCnt += dt
 
         
+
 
 
         # TODO: Fix this, it doesn't detect the key press sometimes (when waiting for other keypress in the loop)
