@@ -707,6 +707,7 @@ def Land(landingStage: int):
 def Hover():
     # TODO: Optimize: Don't calculate the RPM every time
     passValues(0, 0, 0, RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR)), 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    print("Hovering with throttle: ", RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR)))
 
 def findContour(image, *colors):
     contours = []
