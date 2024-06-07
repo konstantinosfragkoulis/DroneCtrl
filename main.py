@@ -63,23 +63,13 @@ RHO = 1.225 # kg/m^3
 
 
 
-# Not implemented yet
-MAXACCEL = 0.5 # 0.5 m/s^2
-MAXTHRUST = 2.94 # ΣF = m * a => T - w = m * a => T = m * a + w =>
-                 #T_max = 0.28 * 0.5 + 2.8 = 2.94 N
-TRUEMAXTHRUST = 5.74 # MAXTHRUST + WEIGHT_N
-
-
-
-
-
 #################################################################
 ###############  USER EDITABLE VARIABLES - START  ###############
 #################################################################
 
 TAKEOFF_TIME = 2 # The time it takes for the drone to take off
 TAKEOFF_HEIGHT = 1 # The height the drone will take off to
-WEIGHT = 0.8 # actual weight is 300 grams but Thrust(),
+MASS = 0.3 # actual MASS is 300 grams but Thrust(),
                 # ThrustToRPM() and RPMtoThrottle() are not very
                 # accurate
 
@@ -93,8 +83,8 @@ WEIGHT = 0.8 # actual weight is 300 grams but Thrust(),
 
 TAKEOFF_TIME1 = 2 * TAKEOFF_TIME / 3
 TAKEOFF_TIME2 = TAKEOFF_TIME / 3
-WEIGHT_N = WEIGHT * G # The weight of the drone in Newtons
-HOVER_THRUST = WEIGHT_N # The thrust needed to hover
+MASS_N = MASS * G # The MASS of the drone in Newtons
+HOVER_THRUST = MASS_N # The thrust needed to hover
 HOVER_THRUST_MOTOR = HOVER_THRUST / 4 # The thrust needed to hover per motor
 
 
@@ -596,14 +586,14 @@ def Disarm():
 #################################################################
 ###############  CONVERSION FUNCTIONS - START  ##################
 #################################################################
-const = (PI * RHO * (0.0762**2) * 0.0635) / (360000 * 4) # * (RPM**2)
+const = (PI * RHO * (0.0762**2) * 0.0635) / (3600 * 4 * 25) # * (RPM**2)
 def Thrust(rpm: int):
     """Calculates the thrust produced by a motor spinning at a given RPM."""
     # Simplified thrust formula: T = (pi * rho * D^2 * n^2 * P) / 4
     global const
     return const * (rpm ** 2)
 
-const2 = math.sqrt((4 * 100 * 3600) / (PI * RHO * (0.0762 ** 2) * 0.0635)) # * sqrt(RPM)
+const2 = math.sqrt((4 * 25 * 3600) / (PI * RHO * (0.0762 ** 2) * 0.0635)) # * sqrt(RPM)
 def ThrustToRPM(thrust: float):
     """Calculates the RPM of a motor needed to produce the given thrust by it."""
     global const2
@@ -634,32 +624,34 @@ def CalculateTakeoff(h: float, t: float):
     global takeoffThrottle2
 
     a1 = (3 * h)/(t ** 2)
-    takeoffThrust1 = WEIGHT * (a1 + G) / G # Divide by G to get the thrust in kg
+    takeoffThrust1 = MASS * (a1 + G)
     takeoffRPM1 = ThrustToRPM(takeoffThrust1/4) # Thrust per motor
     takeoffThrottle1 = RPMtoThrottle(takeoffRPM1)
     u1 = (2 * a1 * t)/3
 
     a2  = -3 * u1/t
-    takeoffThrust2 = WEIGHT * (a2 + G) / G # Divide by G to get the thrust in kg
+    takeoffThrust2 = MASS * (a2 + G)
     takeoffRPM2 = ThrustToRPM(takeoffThrust2/4) # Thrust per motor
     takeoffThrottle2 = RPMtoThrottle(takeoffRPM2)
 
-    print("Takeoff acceleration: ", a1)
-    print("Takeoff speed: ", u1)
-    print("Takeoff Thrust: ", takeoffThrust1)
-    print("Takeoff RPM: ", takeoffRPM1)
-    print("Takeoff Throttle: ", takeoffThrottle1)
-    print("Predicted thrust at takeoff: ", Thrust(takeoffRPM1) * 4)
+    logging.debug(f"\tTakeoff acceleration: {a1}")
+    logging.debug(f"\tTakeoff speed: {u1}", )
+    logging.debug(f"\tTakeoff Thrust: {takeoffThrust1}")
+    logging.debug(f"\tTakeoff RPM: {takeoffRPM1}")
+    logging.debug(f"\tTakeoff Throttle: {takeoffThrottle1}")
+    logging.debug(f"\tTarget thrust at takeoff: {takeoffThrust1}")
+    logging.debug(f"\tPredicted thrust at takeoff: {Thrust(takeoffRPM1) * 4}")
     
-    print("\n")
+    logging.debug("\n")
 
-    print("Takeoff acceleration: ", a2)
-    print("Takeoff Thrust: ", takeoffThrust2)
-    print("Takeoff RPM: ", takeoffRPM2)
-    print("Takeoff Throttle: ", takeoffThrottle2)
-    print("Predicted thrust at takeoff: ", Thrust(takeoffRPM2) * 4)
+    logging.debug(f"\tTakeoff acceleration: {a2}")
+    logging.debug(f"\tTakeoff Thrust: {takeoffThrust2}")
+    logging.debug(f"\tTakeoff RPM: {takeoffRPM2}")
+    logging.debug(f"\tTakeoff Throttle: {takeoffThrottle2}")
+    logging.debug(f"\tTarget thrust at takeoff: {takeoffThrust2}")
+    logging.debug(f"\tPredicted thrust at takeoff: {Thrust(takeoffRPM2) * 4}")
 
-    print("\n")
+    logging.debug("\n")
 
 def Takeoff(takeoffStage: int):
     if takeoffStage == 1:
@@ -677,15 +669,15 @@ def CalculateLanding():
     global landingThrottle1
     global landingThrottle2
 
-    # landingThrottle1 = RPMtoThrottle(ThrustToRPM(WEIGHT_N/4))
-    # landingThrottle2 = RPMtoThrottle(ThrustToRPM(WEIGHT_N/4))
+    # landingThrottle1 = RPMtoThrottle(ThrustToRPM(MASS_N/4))
+    # landingThrottle2 = RPMtoThrottle(ThrustToRPM(MASS_N/4))
 
     landingThrottle1 = 1220
     landingThrottle2 = 1260
 
-    print("Landing Throttle 1: ", landingThrottle1)
-    print("Landing Throttle 2: ", landingThrottle2)
-    print("\n")
+    logging.debug(f"Landing Throttle 2: {landingThrottle2}")
+    logging.debug(f"Landing Throttle 1: {landingThrottle1}")
+    logging.debug("\n")
 
 def Land(landingStage: int):
     global landingThrottle1
@@ -703,11 +695,10 @@ def Land(landingStage: int):
 
 
 
-
+HOVER_THROTTLE = RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR))
 def Hover():
-    # TODO: Optimize: Don't calculate the RPM every time
-    passValues(0, 0, 0, RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR)), 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    print("Hovering with throttle: ", RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR)))
+    passValues(0, 0, 0, HOVER_THROTTLE, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    logging.debug(f"\tHovering with throttle: {HOVER_THROTTLE}")
 
 def findContour(image, *colors):
     contours = []
@@ -832,7 +823,7 @@ def Update():
         return
     else:
         cv.imshow("frame", image)
-        print("dt: ", dt)
+        logging.debug(f"dt: {dt}")
         
 
         keyPressed = cv.waitKey(1)
@@ -897,7 +888,7 @@ def Update():
             
             landingCnt += dt
 
-        
+
 
 
 
