@@ -68,10 +68,8 @@ RHO = 1.225 # kg/m^3
 #################################################################
 
 TAKEOFF_TIME = 2 # The time it takes for the drone to take off
-TAKEOFF_HEIGHT = 1 # The height the drone will take off to
-MASS = 0.3 # actual MASS is 300 grams but Thrust(),
-                # ThrustToRPM() and RPMtoThrottle() are not very
-                # accurate
+TAKEOFF_HEIGHT = 1 # The height the drone will take off to in m
+MASS = 0.31 # The mass of the drone in kg
 
 #################################################################
 ################  USER EDITABLE VARIABLES - END  ################
@@ -83,7 +81,7 @@ MASS = 0.3 # actual MASS is 300 grams but Thrust(),
 
 TAKEOFF_TIME1 = 2 * TAKEOFF_TIME / 3
 TAKEOFF_TIME2 = TAKEOFF_TIME / 3
-MASS_N = MASS * G # The MASS of the drone in Newtons
+MASS_N = MASS * G # The weight of the drone in Newtons
 HOVER_THRUST = MASS_N # The thrust needed to hover
 HOVER_THRUST_MOTOR = HOVER_THRUST / 4 # The thrust needed to hover per motor
 
@@ -122,6 +120,13 @@ image = None # The current image from the camera
 
 dt = 0 # The time difference between to Update calls
 
+
+
+
+
+#################################################################
+############  TAKEOFF AND LANDING VARIABLES - START  ############
+#################################################################
 takeoffCnt = 0
 takeoffThrust1: float = 0
 takeoffThrust2: float = 0
@@ -132,6 +137,9 @@ landingCnt = 0
 landingThrust: float = 0
 landingThrottle1: int = 0
 landingThrottle2: int = 0
+#################################################################
+#############  TAKEOFF AND LANDING VARIABLES - END  #############
+#################################################################
 
 
 
@@ -586,14 +594,14 @@ def Disarm():
 #################################################################
 ###############  CONVERSION FUNCTIONS - START  ##################
 #################################################################
-const = (PI * RHO * (0.0762**2) * 0.0635) / (3600 * 4 * 25) # * (RPM**2)
+const = (PI * RHO * (0.0762**2) * 0.0635) / (3600 * 4 * 30) # * (RPM**2)
 def Thrust(rpm: int):
     """Calculates the thrust produced by a motor spinning at a given RPM."""
     # Simplified thrust formula: T = (pi * rho * D^2 * n^2 * P) / 4
     global const
     return const * (rpm ** 2)
 
-const2 = math.sqrt((4 * 25 * 3600) / (PI * RHO * (0.0762 ** 2) * 0.0635)) # * sqrt(RPM)
+const2 = math.sqrt((4 * 30 * 3600) / (PI * RHO * (0.0762 ** 2) * 0.0635)) # * sqrt(RPM)
 def ThrustToRPM(thrust: float):
     """Calculates the RPM of a motor needed to produce the given thrust by it."""
     global const2
