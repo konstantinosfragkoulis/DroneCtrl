@@ -55,6 +55,7 @@ signals_to_handle = [
 PI = 3.14159
 G = 9.81 # m/s^2
 RHO = 1.225 # kg/m^3
+DEG_TO_RAD = PI/180
 #################################################################
 ###################  PHYSICS CONSTANTS - END  ###################
 #################################################################
@@ -66,11 +67,13 @@ RHO = 1.225 # kg/m^3
 #################################################################
 ###############  USER EDITABLE VARIABLES - START  ###############
 #################################################################
-
 TAKEOFF_TIME = 2 # The time it takes for the drone to take off
 TAKEOFF_HEIGHT = 1 # The height the drone will take off to in m
 MASS = 0.31 # The mass of the drone in kg
 
+MAX_FORWARD_ACCELERATION = 2 # m/s^2
+MAX_VERTICAL_ACCELERATION = 2 # m/s^2
+MAX_ANGULAR_ACCELERATION = 90 # degrees/s^2
 #################################################################
 ################  USER EDITABLE VARIABLES - END  ################
 #################################################################
@@ -609,8 +612,21 @@ def ThrustToRPM(thrust: float):
 
 # TODO: optimize constants which are calculated every time
 def RPMtoThrottle(rpm: int):
-    """Converts the RPM of a motor to a throttle value that can be passed to the shared memory."""
+    """Converts the RPM of a motor to a throttle value (int16) that can be passed to the shared memory."""
     return int(270782500 + (970.5814 - 270782500)/(1 + (rpm/10196720000)**1.011358))
+
+def intToCRSF(value: int):
+    """Converts Pitch, Roll and Yaw from [-32760, 32759] (int16) to [1000, 2000] (CRSF). Not sure about throttle."""
+    return 0.01890788*value + 1500.051
+
+def intToDegPerSec(value: int):
+    """Converts Pitch, Roll, and Yaw values [-32760, 32759] to degrees per second."""
+    return 0.02534762*value + 0.02909812
+
+const3 = 0.02909812/0.02534762
+def degPerSecToInt(value: float):
+    """Converts degrees per second to Pitch, Roll, and Yaw values."""
+    return int(value/0.02534762 - const3)
 #################################################################
 ################  CONVERSION FUNCTIONS - END  ###################
 #################################################################
@@ -708,6 +724,44 @@ def Hover():
     passValues(0, 0, 0, HOVER_THROTTLE, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     logging.debug(f"\tHovering with throttle: {HOVER_THROTTLE}")
 
+def control():
+    """Convert the forward, angle, and vertical values to pitch,
+    yaw, roll and throttle values and pass them to the drone."""
+    global forward
+    global angle
+    global vertical
+
+    a_x = forward*MAX_FORWARD_ACCELERATION # remap_range(forward, -1, 1, -MAX_FORWARD_ACCELERATION, MAX_FORWARD_ACCELERATION, True)
+    a_z = vertical*MAX_VERTICAL_ACCELERATION # remap_range(vertical, -1, 1, -MAX_VERTICAL_ACCELERATION, MAX_VERTICAL_ACCELERATION, True)
+    w_y = angle*MAX_ANGULAR_ACCELERATION # remap_range(angle, -1, 1, -MAX_ANGULAR_ACCELERATION, MAX_ANGULAR_ACCELERATION, True)
+
+    _thrustConst = math.sqrt((a_z+G)**2 + a_x**2)
+    Thrust = MASS * _thrustConst
+    Theta = math.asin(a_x/_thrustConst) * DEG_TO_RAD
+
+    rpm = ThrustToRPM(Thrust/4) # Thrust per motor
+    throttle = RPMtoThrottle(rpm)
+
+    yaw = degPerSecToInt(w_y)
+    pitch = degPerSecToInt(Theta) # We are flying in ANGLE mode, which
+                                # means that the stick position is the
+                                # pitch of the drone, not the acceleration
+                                # of the pitch. Thus, degrees per second
+                                # is not actually degrees per second, but
+                                # rather just degrees.
+    roll = 0
+
+    logging.debug(f"\tThrust: {Thrust}")
+    logging.debug(f"\tRPM: {rpm}")
+    logging.debug(f"\tThrottle: {throttle}")
+    logging.debug(f"\tPitch angle: {Theta}")
+    logging.debug(f"\tPitch: {pitch}")
+    logging.debug(f"\tYaw: {yaw}")
+
+    passValues(yaw, pitch, roll, throttle, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+
+
 def findContour(image, *colors):
     contours = []
     for color in colors:
@@ -740,6 +794,15 @@ def followHoops():
     # Display the image
     cv.imshow("frame", image)
     print("Center: ", center)
+
+def flyForward():
+    global forward
+    global angle
+    global vertical
+
+    forward = 0.5
+    angle = 0
+    vertical = 0
 
 def Awake():
     """Initialization function that is called first even before Start()"""
@@ -831,8 +894,7 @@ def Update():
         return
     else:
         cv.imshow("frame", image)
-        logging.debug(f"dt: {dt}")
-        
+        # logging.debug(f"dt: {dt}")
 
         keyPressed = cv.waitKey(1)
 
@@ -873,11 +935,13 @@ def Update():
             takeoffCnt += dt
 
         elif state == State.Flying:
-            # Fly
             if keyPressed == ord('s'):
                 state = State.Landing
                 landingCnt = 0
                 print("Landing...")
+            
+            flyForward()
+            control()
 
         elif state == State.Landing:
             if landingThrottle1 == 0 or landingThrottle2 == 0:
