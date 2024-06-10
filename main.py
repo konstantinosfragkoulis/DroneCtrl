@@ -94,7 +94,7 @@ PURPLE = ((130, 150, 150), (140, 255, 255))
 ORANGE = ((10, 150, 150), (20, 255, 255))
 RED = ((170, 125, 125), (10, 255, 255))
 GREEN = ((55, 150, 150), (65, 255, 255))
-BLUE = ((100, 125, 125), (115, 255, 255))
+BLUE = ((100, 110, 110), (115, 255, 255))
 
 running = True # The main loop of the program
 
@@ -799,6 +799,27 @@ def followHoops():
     cv.imshow("frame", image)
     print("Center: ", center)
 
+def followTarget(*colors):
+    global image
+    global forward
+    global angle
+    global vertical
+
+    contour, center = findContour(image, *colors)
+
+    if center is None:
+        return
+    else:
+        dx = remap_range(center[1], 0, 640, -2, 2)
+        dy = remap_range(center[0], 0, 480, 2, -2)
+
+        angle = dx
+        vertical = dy
+        forward = 0.5
+
+        logging.debug(f"\n\nangle: {angle}")
+        logging.debug(f"vertical: {vertical}\n\n")
+
 def flyForward():
     global forward
     global angle
@@ -897,7 +918,6 @@ def Update():
         running = False
         return
     else:
-        cv.imshow("frame", image)
         # logging.debug(f"dt: {dt}")
         print("Hover throttle: ", HOVER_THROTTLE)
 
@@ -940,13 +960,12 @@ def Update():
             takeoffCnt += dt
 
         elif state == State.Flying:
-            state = State.Landing
             if keyPressed == ord('s'):
                 state = State.Landing
                 landingCnt = 0
                 print("Landing...")
             
-            flyForward()
+            followTarget(BLUE)
             control()
 
         elif state == State.Landing:
@@ -972,6 +991,8 @@ def Update():
 
         if keyPressed == ord('q'):
             running = False
+        
+        cv.imshow("frame", image)
 
 
 if __name__ == "__main__":
