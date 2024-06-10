@@ -55,7 +55,7 @@ signals_to_handle = [
 PI = 3.14159
 G = 9.81 # m/s^2
 RHO = 1.225 # kg/m^3
-DEG_TO_RAD = PI/180
+DEG_TO_RAD = 180/PI
 #################################################################
 ###################  PHYSICS CONSTANTS - END  ###################
 #################################################################
@@ -561,7 +561,7 @@ def passValues(*inputs):
     if len(inputs) > 16:
         logging.debug("\tError: Too many inputs. Maximum is 16.")
         return
-    values = list(inputs) + [0] * (15 - len(inputs))
+    values = list(inputs) + [0] * (16 - len(inputs))
     map_file.seek(0)  # Go back to the beginning of the mmap
     map_file.write(struct.pack('i'*16, *values))
 #################################################################
@@ -579,7 +579,7 @@ def Arm():
     """Arms the drone by lowering the throttle to the minimum value
     and setting AUX1 to high."""
     passValues(0, 0, 0, -32760, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    sleep(0.1)
+    sleep(0.5)
     passValues(0, 0, 0, -32760, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 def Disarm():
@@ -735,9 +735,13 @@ def control():
     a_z = vertical*MAX_VERTICAL_ACCELERATION # remap_range(vertical, -1, 1, -MAX_VERTICAL_ACCELERATION, MAX_VERTICAL_ACCELERATION, True)
     w_y = angle*MAX_ANGULAR_ACCELERATION # remap_range(angle, -1, 1, -MAX_ANGULAR_ACCELERATION, MAX_ANGULAR_ACCELERATION, True)
 
+    logging.debug(f"a_x: , {a_x}, a_z: , {a_z}, w_y: , {w_y}")
+
     _thrustConst = math.sqrt((a_z+G)**2 + a_x**2)
     Thrust = MASS * _thrustConst
     Theta = math.asin(a_x/_thrustConst) * DEG_TO_RAD
+
+    logging.debug(f"Theta: {Theta}")
 
     rpm = ThrustToRPM(Thrust/4) # Thrust per motor
     throttle = RPMtoThrottle(rpm)
@@ -935,6 +939,7 @@ def Update():
             takeoffCnt += dt
 
         elif state == State.Flying:
+            state = State.Landing
             if keyPressed == ord('s'):
                 state = State.Landing
                 landingCnt = 0
