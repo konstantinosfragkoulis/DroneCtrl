@@ -708,8 +708,10 @@ def Land(landingStage: int):
     global landingThrottle2
     if landingStage == 1:
         passValues(0, 0, 0, landingThrottle1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        logging.debug(f"\tSetting throttle to {landingThrottle1} for landing stage 1...")
     elif landingStage == 2:
         passValues(0, 0, 0, landingThrottle2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        logging.debug(f"\tSetting throttle to {landingThrottle2} for landing stage 2...")
     else:
         logging.debug(f"\tInvalid landing stage {landingStage}. Must be 1 or 2")
 #################################################################
@@ -990,7 +992,6 @@ def Update():
                 cleanup()
 
         elif state == State.Landing:
-            print("Landing...")
             if landingThrottle1 == 0 or landingThrottle2 == 0:
                 logging.debug("\tLanding thrust not calculated yet")
                 logging.debug("\tCalculating landing thrust...")
@@ -1011,6 +1012,7 @@ def Update():
                     cleanup()
             else:
                 state = State.Grounded
+                landingCnt = 0
                 print("Landed")
             
             landingCnt += dt
