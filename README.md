@@ -1,4 +1,4 @@
-# Dronectrl
+# DroneCtrl
 
 DroneCtrl is a Python program for controlling and programming autonomous drones. It is designed to be easy to use and to work with almost all FPV drones.
 
