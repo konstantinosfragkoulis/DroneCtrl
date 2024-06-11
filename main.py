@@ -67,8 +67,8 @@ DEG_TO_RAD = 180/PI
 #################################################################
 ###############  USER EDITABLE VARIABLES - START  ###############
 #################################################################
-TAKEOFF_TIME = 2 # The time it takes for the drone to take off
-TAKEOFF_HEIGHT = 1 # The height the drone will take off to in m
+TAKEOFF_TIME = 0.5 # The time it takes for the drone to take off
+TAKEOFF_HEIGHT = 0.1 # The height the drone will take off to in m
 MASS = 0.31 # The mass of the drone in kg
 
 MAX_FORWARD_ACCELERATION = 2 # m/s^2
@@ -696,8 +696,8 @@ def CalculateLanding():
     # landingThrottle1 = RPMtoThrottle(ThrustToRPM(MASS_N/4))
     # landingThrottle2 = RPMtoThrottle(ThrustToRPM(MASS_N/4))
 
-    landingThrottle1 = 1220
-    landingThrottle2 = 1260
+    landingThrottle1 = int(remap_range(1220, 1000, 2000, -32760, 32759))
+    landingThrottle2 = int(remap_range(1260, 1000, 2000, -32760, 32759))
 
     logging.debug(f"Landing Throttle 2: {landingThrottle2}")
     logging.debug(f"Landing Throttle 1: {landingThrottle1}")
@@ -926,7 +926,11 @@ def Update():
 
         if state == State.Disarmed:
             if keyPressed == ord('r'):
-                Arm()
+                try:
+                    Arm()
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    cleanup()
                 state = State.Grounded
                 print("Armed")
                 
@@ -948,11 +952,19 @@ def Update():
                 logging.debug("\tTakeoff thrust calculated")
                 logging.debug("\tStarting takeoff...\n")
             elif takeoffCnt < TAKEOFF_TIME1:
-                Takeoff(1)
+                try:
+                    Takeoff(1)
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    cleanup()
             elif takeoffCnt < TAKEOFF_TIME:
-                Takeoff(2)
+                try:
+                    Takeoff(2)
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    cleanup()
             else:
-                state = State.Flying
+                state = State.Landing
                 takeoffCnt = 0
                 print("Flying...")
                 Hover()
@@ -965,10 +977,20 @@ def Update():
                 landingCnt = 0
                 print("Landing...")
             
-            followTarget(BLUE)
-            control()
+            try:
+                followTarget(BLUE)
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                cleanup()
+            
+            try:
+                control()
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                cleanup()
 
         elif state == State.Landing:
+            print("Landing...")
             if landingThrottle1 == 0 or landingThrottle2 == 0:
                 logging.debug("\tLanding thrust not calculated yet")
                 logging.debug("\tCalculating landing thrust...")
@@ -976,9 +998,17 @@ def Update():
                 logging.debug("\tLanding thrust calculated")
                 logging.debug("\tStarting landing...\n")
             if landingCnt < 0.5:
-                Land(1)
+                try:
+                    Land(1)
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    cleanup()
             elif landingCnt < 2:
-                Land(2)
+                try:
+                    Land(2)
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    cleanup()
             else:
                 state = State.Grounded
                 print("Landed")
