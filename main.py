@@ -92,8 +92,6 @@ MAX_ANGULAR_ACCELERATION = 90 # degrees/s^2
 TAKEOFF_TIME1 = 2 * TAKEOFF_TIME / 3
 TAKEOFF_TIME2 = TAKEOFF_TIME / 3
 MASS_N = MASS * G # The weight of the drone in Newtons
-HOVER_THRUST = MASS_N # The thrust needed to hover
-HOVER_THRUST_MOTOR = HOVER_THRUST / 4 # The thrust needed to hover per motor
 LANDING_TIME1 = LANDING_TIME / 3
 
 
@@ -594,7 +592,13 @@ def Disarm():
 
 def ZeroThrottle():
     """Sets the throttle to the minimum value, with the drone still armed."""
-    passValues(0, 0, 0, -32760, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    global forward
+    global angle
+    global vertical
+
+    forward = 0
+    angle = 0
+    vertical = -10
 #################################################################
 ###################  BASIC FUNCTIONS - END  #####################
 #################################################################
@@ -669,8 +673,8 @@ def CalculateTakeoff(h: float, t: float):
     takeoffRPM2 = ThrustToRPM(takeoffThrust2/4) # Thrust per motor
     takeoffThrottle2 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM2))
 
-    takeoffAccel1 = a1
-    takeoffAccel2 = a2
+    takeoffAccel1 = a1/MAX_VERTICAL_ACCELERATION
+    takeoffAccel2 = a2/MAX_VERTICAL_ACCELERATION
 
     logging.debug(f"\tTakeoff acceleration: {a1}")
     logging.debug(f"\tTakeoff speed: {u1}", )
@@ -756,7 +760,7 @@ def Land(landingStage: int):
 
 
 
-HOVER_THROTTLE = CRSFtoInt(RPMtoThrottleCRSF(ThrustToRPM(HOVER_THRUST_MOTOR)))
+
 def Hover():
     global forward
     global angle
@@ -773,29 +777,48 @@ def control():
     global angle
     global vertical
 
+    if forward > 1 or forward < -1:
+        print(f"\tInvalid forward value {forward}. Must be between -1 and 1.")
+        cleanup()
+    elif angle > 1 or angle < -1:
+        print(f"\tInvalid angle value {angle}. Must be between -1 and 1.")
+        cleanup()
+    elif (vertical > 1 or vertical < -1) and not vertical == -10:
+        print(f"\tInvalid vertical value {vertical}. Must be between -1 and 1.")
+        cleanup()
+
     a_x = forward*MAX_FORWARD_ACCELERATION # remap_range(forward, -1, 1, -MAX_FORWARD_ACCELERATION, MAX_FORWARD_ACCELERATION, True)
     a_z = vertical*MAX_VERTICAL_ACCELERATION # remap_range(vertical, -1, 1, -MAX_VERTICAL_ACCELERATION, MAX_VERTICAL_ACCELERATION, True)
     w_y = angle*MAX_ANGULAR_ACCELERATION # remap_range(angle, -1, 1, -MAX_ANGULAR_ACCELERATION, MAX_ANGULAR_ACCELERATION, True)
 
     logging.debug(f"\ta_x: , {a_x}, a_z: , {a_z}, w_y: , {w_y}")
 
-    _thrustConst = math.sqrt((a_z+G)**2 + a_x**2)
-    Thrust = MASS * _thrustConst
-    Theta = math.asin(a_x/_thrustConst) * DEG_TO_RAD
+    if vertical == -10:
+        Thrust = 0
+        Theta = 0
+        rpm = 0
+        throttle = -32760
+        yaw = 0
+        pitch = 0
+        roll = 0
+    else:
+        _thrustConst = math.sqrt((a_z+G)**2 + a_x**2)
+        Thrust = MASS * _thrustConst
+        Theta = math.asin(a_x/_thrustConst) * DEG_TO_RAD
 
-    logging.debug(f"\tTheta: {Theta}")
+        logging.debug(f"\tTheta: {Theta}")
 
-    rpm = ThrustToRPM(Thrust/4) # Thrust per motor
-    throttle = CRSFtoInt(RPMtoThrottleCRSF(rpm))
+        rpm = ThrustToRPM(Thrust/4) # Thrust per motor
+        throttle = CRSFtoInt(RPMtoThrottleCRSF(rpm))
 
-    yaw = degPerSecToInt(w_y)
-    pitch = degPerSecToInt(Theta) # We are flying in ANGLE mode, which
-                                # means that the stick position is the
-                                # pitch of the drone, not the acceleration
-                                # of the pitch. Thus, degrees per second
-                                # is not actually degrees per second, but
-                                # rather just degrees.
-    roll = 0
+        yaw = degPerSecToInt(w_y)
+        pitch = degPerSecToInt(Theta) # We are flying in ANGLE mode, which
+                                    # means that the stick position is the
+                                    # pitch of the drone, not the acceleration
+                                    # of the pitch. Thus, degrees per second
+                                    # is not actually degrees per second, but
+                                    # rather just degrees.
+        roll = 0
 
     logging.debug(f"\tThrust: {Thrust}")
     logging.debug(f"\tRPM: {rpm}")
@@ -1020,6 +1043,7 @@ def Update():
             
 
             if flyingState == FlyingState.Hovering:
+                logging.debug("Hovering")
                 try:
                     Hover()
                 except Exception as e:
