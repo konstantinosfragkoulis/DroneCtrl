@@ -70,6 +70,7 @@ DEG_TO_RAD = 180/PI
 TAKEOFF_TIME = 0.5 # The time it takes for the drone to take off
 TAKEOFF_HEIGHT = 0.1 # The height the drone will take off to in m
 MASS = 0.31 # The mass of the drone in kg
+LANDING_TIME = 5 # The drone will be descending for this time
 
 MAX_FORWARD_ACCELERATION = 2 # m/s^2
 MAX_VERTICAL_ACCELERATION = 2 # m/s^2
@@ -87,7 +88,7 @@ TAKEOFF_TIME2 = TAKEOFF_TIME / 3
 MASS_N = MASS * G # The weight of the drone in Newtons
 HOVER_THRUST = MASS_N # The thrust needed to hover
 HOVER_THRUST_MOTOR = HOVER_THRUST / 4 # The thrust needed to hover per motor
-
+LANDING_TIME1 = LANDING_TIME / 3
 
 
 PURPLE = ((130, 150, 150), (140, 255, 255))
@@ -586,6 +587,10 @@ def Disarm():
     """Disarms the drone by lowering the throttle to the minimum value
     and setting AUX1 to low."""
     passValues(0, 0, 0, -32760, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+def ZeroThrottle():
+    """Sets the throttle to the minimum value, with the drone still armed."""
+    passValues(0, 0, 0, -32760, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 #################################################################
 ###################  BASIC FUNCTIONS - END  #####################
 #################################################################
@@ -998,19 +1003,20 @@ def Update():
                 CalculateLanding()
                 logging.debug("\tLanding thrust calculated")
                 logging.debug("\tStarting landing...\n")
-            if landingCnt < 0.5:
+            if landingCnt < LANDING_TIME1:
                 try:
                     Land(1)
                 except Exception as e:
                     print(f"An error occurred: {e}")
                     cleanup()
-            elif landingCnt < 2:
+            elif landingCnt < LANDING_TIME:
                 try:
                     Land(2)
                 except Exception as e:
                     print(f"An error occurred: {e}")
                     cleanup()
             else:
+                ZeroThrottle()
                 state = State.Grounded
                 landingCnt = 0
                 print("Landed")
