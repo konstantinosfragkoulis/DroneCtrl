@@ -1,4 +1,4 @@
-# Dronectrl
+# DroneCtrl
 
 DroneCtrl is a Python program for controlling and programming autonomous drones. It is designed to be easy to use and to work with almost all FPV drones.
 
@@ -37,7 +37,7 @@ Currently, not much works. All you can do is:
 - Automatic landing
 
 ## Features Currently Being Implemented
-- Controlling the drone with easy-to-use functions: Instead of manually setting the yaw, pitch, roll and throttle, you will just set the forward and vertical acceleration, and a helper function will do all of the converions.
+- Controlling the drone with easy-to-use functions: Instead of manually setting the yaw, pitch, roll and throttle, you will just set the forward and vertical acceleration, and a helper function will do all of the conversions.
 
 ## Future Features
 The following features are planned to be implemented:
