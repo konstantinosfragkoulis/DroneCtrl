@@ -787,9 +787,9 @@ def control():
         print(f"\tInvalid vertical value {vertical}. Must be between -1 and 1.")
         cleanup()
 
-    a_x = forward*MAX_FORWARD_ACCELERATION # remap_range(forward, -1, 1, -MAX_FORWARD_ACCELERATION, MAX_FORWARD_ACCELERATION, True)
-    a_z = vertical*MAX_VERTICAL_ACCELERATION # remap_range(vertical, -1, 1, -MAX_VERTICAL_ACCELERATION, MAX_VERTICAL_ACCELERATION, True)
-    w_y = angle*MAX_ANGULAR_ACCELERATION # remap_range(angle, -1, 1, -MAX_ANGULAR_ACCELERATION, MAX_ANGULAR_ACCELERATION, True)
+    a_x = forward*MAX_FORWARD_ACCELERATION
+    a_z = vertical*MAX_VERTICAL_ACCELERATION
+    w_y = angle*MAX_ANGULAR_ACCELERATION
 
     logging.debug(f"\ta_x: , {a_x}, a_z: , {a_z}, w_y: , {w_y}")
 
