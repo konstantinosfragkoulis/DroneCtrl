@@ -581,14 +581,14 @@ def passValues(*inputs):
 def Arm():
     """Arms the drone by lowering the throttle to the minimum value
     and setting AUX1 to high."""
-    passValues(0, 0, 0, -32760, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    passValues(0, 0, 0, -32768, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     sleep(0.5)
-    passValues(0, 0, 0, -32760, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    passValues(0, 0, 0, -32768, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 def Disarm():
     """Disarms the drone by lowering the throttle to the minimum value
     and setting AUX1 to low."""
-    passValues(0, 0, 0, -32760, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    passValues(0, 0, 0, -32768, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 def ZeroThrottle():
     """Sets the throttle to the minimum value, with the drone still armed."""
@@ -637,12 +637,12 @@ def intToCRSF(value: int):
     return int(0.01890788*value + 1500.051)
 
 def intToDegPerSec(value: int):
-    """Converts Pitch, Roll, and Yaw values [-32760, 32759] to degrees per second."""
+    """Converts Pitch, Roll, and Yaw values [-32768, 32767] to degrees per second."""
     return 0.02534762*value + 0.02909812
 
 const3 = 0.02909812/0.02534762
 def degPerSecToInt(value: float):
-    """Converts degrees per second to Pitch, Roll, and Yaw values."""
+    """Converts degrees per second to int16 [-32768, 32767]."""
     return int(value/0.02534762 - const3)
 #################################################################
 ################  CONVERSION FUNCTIONS - END  ###################
@@ -663,15 +663,18 @@ def CalculateTakeoff(h: float, t: float):
     global takeoffAccel2
 
     a1 = (3 * h)/(t ** 2)
+
+    # This is not necessary for takeoff, but it is useful for debugging
     takeoffThrust1 = MASS * (a1 + G)
     takeoffRPM1 = ThrustToRPM(takeoffThrust1/4) # Thrust per motor
     takeoffThrottle1 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM1))
     u1 = (2 * a1 * t)/3
 
-    a2  = -3 * u1/t
+    a2  = -3 * u1/t # This, however, is necessary for takeoff
     takeoffThrust2 = MASS * (a2 + G)
     takeoffRPM2 = ThrustToRPM(takeoffThrust2/4) # Thrust per motor
     takeoffThrottle2 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM2))
+    # End of unnecessary calculations
 
     takeoffAccel1 = a1/MAX_VERTICAL_ACCELERATION
     takeoffAccel2 = a2/MAX_VERTICAL_ACCELERATION
@@ -991,7 +994,7 @@ def Update():
                 try:
                     Arm()
                 except Exception as e:
-                    print(f"An error occurred: {e}")
+                    print(f"An error occurred while calling Arm() when Disarmed: {e}")
                     cleanup()
                 state = State.Grounded
                 print("Armed")
@@ -1029,6 +1032,7 @@ def Update():
                     cleanup()
             else:
                 state = State.Flying
+                flyingState = FlyingState.Hovering
                 takeoffCnt = 0
                 print("Flying...")
                 Hover()
