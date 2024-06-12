@@ -561,8 +561,9 @@ def handle_signal(signum, frame):
 def passValues(*inputs):
     """Passes the given values to the shared memory, effectively transmitting them to the drone."""
     global values
-    if len(inputs) > 16:
-        logging.debug("\tError: Too many inputs. Maximum is 16.")
+    if len(inputs) != 16:
+        logging.debug("\tError: You must pass 16 values!")
+        cleanup()
         return
     values = list(inputs) + [0] * (16 - len(inputs))
     map_file.seek(0)  # Go back to the beginning of the mmap
