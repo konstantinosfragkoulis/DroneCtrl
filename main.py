@@ -35,6 +35,12 @@ class State(IntEnum):
 
 state = State.Disarmed
 
+class FlyingState(IntEnum):
+    Hovering = 0
+    FollowingObject = 1
+
+flyingState = FlyingState.Hovering
+
 signals_to_handle = [
     signal.SIGINT,
     signal.SIGTERM,
@@ -132,15 +138,12 @@ dt = 0 # The time difference between to Update calls
 ############  TAKEOFF AND LANDING VARIABLES - START  ############
 #################################################################
 takeoffCnt = 0
-takeoffThrust1: float = 0
-takeoffThrust2: float = 0
-takeoffThrottle1: int = 0
-takeoffThrottle2: int = 0
+takeoffAccel1: float = 0
+takeoffAccel2: float = 0
 
 landingCnt = 0
-landingThrust: float = 0
-landingThrottle1: int = 0
-landingThrottle2: int = 0
+landingAccel1: float = 0
+landingAccel2: float = 0
 #################################################################
 #############  TAKEOFF AND LANDING VARIABLES - END  #############
 #################################################################
@@ -537,7 +540,6 @@ def cleanup():
 
     logging.debug("\tDrone disarmed")
     logging.debug("\tReleasing camera...")
-    # Release the camera
     cap.release()
     cv.destroyAllWindows()
 
@@ -551,8 +553,10 @@ def cleanup():
     sys.exit(0)
 
 def handle_signal(signum, frame):
-    """Handles many signals that stop program execution by cleaning up and exiting the program.
-    VERY IMPORTANT! Under no circumstances should the program exit without calling cleanup or disarming the drone!"""
+    """Handles many signals that stop program execution by cleaning
+    up and exiting the program.\nVERY IMPORTANT! Under no circumstances
+    should the program exit without calling cleanup or disarming the
+    drone!"""
     print(f"\nDetected signal {signum}!\nCleaning up...")
     cleanup()
 
@@ -651,10 +655,8 @@ def CalculateTakeoff(h: float, t: float):
     """Calculates the thrust needed for the drone to take off to a given
     height `h` in a given time `t`.""" 
     global height
-    global takeoffThrust1
-    global takeoffThrust2
-    global takeoffThrottle1
-    global takeoffThrottle2
+    global takeoffAccel1
+    global takeoffAccel2
 
     a1 = (3 * h)/(t ** 2)
     takeoffThrust1 = MASS * (a1 + G)
@@ -666,6 +668,9 @@ def CalculateTakeoff(h: float, t: float):
     takeoffThrust2 = MASS * (a2 + G)
     takeoffRPM2 = ThrustToRPM(takeoffThrust2/4) # Thrust per motor
     takeoffThrottle2 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM2))
+
+    takeoffAccel1 = a1
+    takeoffAccel2 = a2
 
     logging.debug(f"\tTakeoff acceleration: {a1}")
     logging.debug(f"\tTakeoff speed: {u1}", )
@@ -689,40 +694,59 @@ def CalculateTakeoff(h: float, t: float):
     logging.debug("\n")
 
 def Takeoff(takeoffStage: int):
+    global forward
+    global angle
+    global vertical
+
+    global takeoffAccel1
+    global takeoffAccel2
+
     if takeoffStage == 1:
-        logging.debug(f"\tSetting throttle to {intToCRSF(takeoffThrottle1)} for takeoff stage 1...")
-        passValues(0, 0, 0, takeoffThrottle1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        logging.debug(f"\tSetting acceleration to {takeoffAccel2} for takeoff stage 1...")
+        forward = 0
+        angle = 0
+        vertical = takeoffAccel1
     elif takeoffStage == 2:
-        logging.debug(f"\tSetting throttle to {intToCRSF(takeoffThrottle2)} for takeoff stage 2...")
-        passValues(0, 0, 0, takeoffThrottle2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        logging.debug(f"\tSetting acceleration to {takeoffAccel1} for takeoff stage 2...")
+        forward = 0
+        angle = 0
+        vertical = takeoffAccel1
     else:
         logging.debug(f"\tInvalid takeoff stage {takeoffStage}. Must be 1 or 2")
 
 # TODO: Actually calculate landing thrust
 def CalculateLanding():
     """Calculates the thrust needed for the drone to land relatively slowly.""" 
-    global landingThrottle1
-    global landingThrottle2
+    global landingAccel1
+    global landingAccel2
 
     # landingThrottle1 = CRSFtoInt(RPMtoThrottle(ThrustToRPM(MASS_N/4)))
     # landingThrottle2 = CRSFtoInt(RPMtoThrottle(ThrustToRPM(MASS_N/4)))
 
-    landingThrottle1 = int(remap_range(1220, 1000, 2000, -32760, 32759))
-    landingThrottle2 = int(remap_range(1260, 1000, 2000, -32760, 32759))
+    landingAccel1 = -0.2
+    landingAccel2 = -0.1
 
-    logging.debug(f"Landing Throttle 2: {landingThrottle2}")
-    logging.debug(f"Landing Throttle 1: {landingThrottle1}")
+    logging.debug(f"Landing Acceleration 1: {landingAccel1}")
+    logging.debug(f"Landing Acceleration 2: {landingAccel2}")
     logging.debug("\n")
 
 def Land(landingStage: int):
-    global landingThrottle1
-    global landingThrottle2
+    global forward
+    global angle
+    global vertical
+    
+    global landingAccel1
+    global landingAccel2
     if landingStage == 1:
-        passValues(0, 0, 0, landingThrottle1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        logging.debug(f"\tSetting throttle to {landingThrottle1} for landing stage 1...")
+        logging.debug(f"\tSetting acceleration to {landingAccel1} for landing stage 1...")
+        forward = 0
+        angle = 0
+        vertical = landingAccel1
     elif landingStage == 2:
-        passValues(0, 0, 0, landingThrottle2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        logging.debug(f"\tSetting throttle to {landingThrottle2} for landing stage 2...")
+        logging.debug(f"\tSetting acceleration to {landingAccel2} for landing stage 2...")
+        forward = 0
+        angle = 0
+        vertical = landingAccel2
     else:
         logging.debug(f"\tInvalid landing stage {landingStage}. Must be 1 or 2")
 #################################################################
@@ -734,8 +758,13 @@ def Land(landingStage: int):
 
 HOVER_THROTTLE = CRSFtoInt(RPMtoThrottleCRSF(ThrustToRPM(HOVER_THRUST_MOTOR)))
 def Hover():
-    passValues(0, 0, 0, HOVER_THROTTLE, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    logging.debug(f"\tHovering with throttle: {intToCRSF(HOVER_THROTTLE)}")
+    global forward
+    global angle
+    global vertical
+
+    forward = 0
+    angle = 0
+    vertical = 0
 
 def control():
     """Convert the forward, angle, and vertical values to pitch,
@@ -748,13 +777,13 @@ def control():
     a_z = vertical*MAX_VERTICAL_ACCELERATION # remap_range(vertical, -1, 1, -MAX_VERTICAL_ACCELERATION, MAX_VERTICAL_ACCELERATION, True)
     w_y = angle*MAX_ANGULAR_ACCELERATION # remap_range(angle, -1, 1, -MAX_ANGULAR_ACCELERATION, MAX_ANGULAR_ACCELERATION, True)
 
-    logging.debug(f"a_x: , {a_x}, a_z: , {a_z}, w_y: , {w_y}")
+    logging.debug(f"\ta_x: , {a_x}, a_z: , {a_z}, w_y: , {w_y}")
 
     _thrustConst = math.sqrt((a_z+G)**2 + a_x**2)
     Thrust = MASS * _thrustConst
     Theta = math.asin(a_x/_thrustConst) * DEG_TO_RAD
 
-    logging.debug(f"Theta: {Theta}")
+    logging.debug(f"\tTheta: {Theta}")
 
     rpm = ThrustToRPM(Thrust/4) # Thrust per motor
     throttle = CRSFtoInt(RPMtoThrottleCRSF(rpm))
@@ -771,6 +800,7 @@ def control():
     logging.debug(f"\tThrust: {Thrust}")
     logging.debug(f"\tRPM: {rpm}")
     logging.debug(f"\tThrottle: {throttle}")
+    logging.debug(f"\tThrottle CRSF: {intToCRSF(throttle)}")
     logging.debug(f"\tPitch angle: {Theta}")
     logging.debug(f"\tPitch: {pitch}")
     logging.debug(f"\tYaw: {yaw}")
@@ -886,6 +916,8 @@ def Start():
         Arm()  # Arm the drone
         state = State.Grounded
         logging.debug("\tDrone armed")
+        CalculateTakeoff(TAKEOFF_HEIGHT, TAKEOFF_TIME)
+        CalculateLanding()
         print("\nDrone initialized!\n\n\n")
     else:
         print("Failed get first frame!\nThere is a problem with the camera", file=sys.stderr)
@@ -913,17 +945,12 @@ def Update():
     global image
     global values
     global state
+    global flyingState
     global dt
 
     global takeoffCnt
-    global takeoffThrust1
-    global takeoffThrust2
-    global takeoffThrottle1
-    global takeoffThrottle2
 
     global landingCnt
-    global landingThrottle1
-    global landingThrottle2
 
     ret, image = cap.read()
     if not ret:
@@ -952,28 +979,30 @@ def Update():
                 takeoffCnt = 0
                 print("Taking off...")
             elif keyPressed == ord('r'):
-                Disarm()
+                try:
+                    Disarm()
+                except Exception as e:
+                    print(f"An error occurred while calling Disarm() with the drone Grounded: {e}")
+                    cleanup()
+                # No point in using try-except here
+                # if Disarm() fails, there is a serious problem
+                # cleanup() will just call Disarm() again
+                # but for consistency, we will use try-except
                 state = State.Disarmed
                 print("Disarmed")
 
         elif state == State.TakingOff:
-            if takeoffThrust1 == 0 or takeoffThrust2 == 0:
-                logging.debug("\tTakeoff thrust not calculated yet")
-                logging.debug("\tCalculating takeoff thrust...")
-                CalculateTakeoff(TAKEOFF_HEIGHT, TAKEOFF_TIME)
-                logging.debug("\tTakeoff thrust calculated")
-                logging.debug("\tStarting takeoff...\n")
-            elif takeoffCnt < TAKEOFF_TIME1:
+            if takeoffCnt < TAKEOFF_TIME1:
                 try:
                     Takeoff(1)
                 except Exception as e:
-                    print(f"An error occurred: {e}")
+                    print(f"An error occurred while calling Takeoff(1): {e}")
                     cleanup()
             elif takeoffCnt < TAKEOFF_TIME:
                 try:
                     Takeoff(2)
                 except Exception as e:
-                    print(f"An error occurred: {e}")
+                    print(f"An error occurred while calling Takeoff(2): {e}")
                     cleanup()
             else:
                 state = State.Flying
@@ -989,40 +1018,33 @@ def Update():
                 landingCnt = 0
                 print("Landing...")
             
-            try:
-                # followTarget(BLUE)
-                pass
-            except Exception as e:
-                print(f"An error occurred: {e}")
-                cleanup()
-            
-            try:
-                # control()
-                pass
-            except Exception as e:
-                print(f"An error occurred: {e}")
-                cleanup()
-            
-            Hover()
+
+            if flyingState == FlyingState.Hovering:
+                try:
+                    Hover()
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    cleanup()
+            elif flyingState == FlyingState.FollowingObject:
+                try:
+                    followTarget(BLUE)
+                    pass
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    cleanup()
 
         elif state == State.Landing:
-            if landingThrottle1 == 0 or landingThrottle2 == 0:
-                logging.debug("\tLanding thrust not calculated yet")
-                logging.debug("\tCalculating landing thrust...")
-                CalculateLanding()
-                logging.debug("\tLanding thrust calculated")
-                logging.debug("\tStarting landing...\n")
             if landingCnt < LANDING_TIME1:
                 try:
                     Land(1)
                 except Exception as e:
-                    print(f"An error occurred: {e}")
+                    print(f"An error occurred while calling Land(1): {e}")
                     cleanup()
             elif landingCnt < LANDING_TIME:
                 try:
                     Land(2)
                 except Exception as e:
-                    print(f"An error occurred: {e}")
+                    print(f"An error occurred while calling Land(2): {e}")
                     cleanup()
             else:
                 ZeroThrottle()
@@ -1033,7 +1055,11 @@ def Update():
             landingCnt += dt
 
 
-
+        try:
+            control()
+        except Exception as e:
+            print(f"An error occurred while calling control(): {e}")
+            cleanup()
 
 
         if keyPressed == ord('q'):
@@ -1051,7 +1077,7 @@ if __name__ == "__main__":
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
 
-    logging.debug('Only shown in debug mode')
+    logging.debug("\tVerbose mode")
     Awake()
     Start()
     UpdateHelp()
