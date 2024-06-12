@@ -1045,6 +1045,12 @@ def Update():
                 state = State.Landing
                 landingCnt = 0
                 print("Landing...")
+            elif keyPressed == ord('f'):
+                flyingState = FlyingState.FollowingObject
+                print("Following object")
+            elif keyPressed == ord('h'):
+                flyingState = FlyingState.Hovering
+                print("Hovering")
             
 
             if flyingState == FlyingState.Hovering:
