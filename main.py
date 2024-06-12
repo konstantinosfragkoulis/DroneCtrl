@@ -616,13 +616,17 @@ def ThrustToRPM(thrust: float):
     return int((math.sqrt(thrust)) * const2)
 
 # TODO: optimize constants which are calculated every time
-def RPMtoThrottle(rpm: int):
-    """Converts the RPM of a motor to a throttle value (int16) that can be passed to the shared memory."""
+def RPMtoThrottleCRSF(rpm: int):
+    """Converts the RPM of a motor to a CRSF throttle value [1000, 2000]."""
     return int(270782500 + (970.5814 - 270782500)/(1 + (rpm/10196720000)**1.011358))
 
+def CRSFtoInt(value: int):
+    """Converts from CRSF [1000, 2000] to int16 [-32768, 32767]."""
+    return int(52.88747*value - 79333.9)
+               
 def intToCRSF(value: int):
-    """Converts Pitch, Roll and Yaw from [-32760, 32759] (int16) to [1000, 2000] (CRSF). Not sure about throttle."""
-    return 0.01890788*value + 1500.051
+    """Converts from int16 [-32768, 32767] to CRSF [1000, 2000]."""
+    return int(0.01890788*value + 1500.051)
 
 def intToDegPerSec(value: int):
     """Converts Pitch, Roll, and Yaw values [-32760, 32759] to degrees per second."""
@@ -655,18 +659,19 @@ def CalculateTakeoff(h: float, t: float):
     a1 = (3 * h)/(t ** 2)
     takeoffThrust1 = MASS * (a1 + G)
     takeoffRPM1 = ThrustToRPM(takeoffThrust1/4) # Thrust per motor
-    takeoffThrottle1 = RPMtoThrottle(takeoffRPM1)
+    takeoffThrottle1 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM1))
     u1 = (2 * a1 * t)/3
 
     a2  = -3 * u1/t
     takeoffThrust2 = MASS * (a2 + G)
     takeoffRPM2 = ThrustToRPM(takeoffThrust2/4) # Thrust per motor
-    takeoffThrottle2 = RPMtoThrottle(takeoffRPM2)
+    takeoffThrottle2 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM2))
 
     logging.debug(f"\tTakeoff acceleration: {a1}")
     logging.debug(f"\tTakeoff speed: {u1}", )
     logging.debug(f"\tTakeoff Thrust: {takeoffThrust1}")
     logging.debug(f"\tTakeoff RPM: {takeoffRPM1}")
+    logging.debug(f"\tTakeoff Throttle CRSF: {intToCRSF(takeoffThrottle1)}")
     logging.debug(f"\tTakeoff Throttle: {takeoffThrottle1}")
     logging.debug(f"\tTarget thrust at takeoff: {takeoffThrust1}")
     logging.debug(f"\tPredicted thrust at takeoff: {Thrust(takeoffRPM1) * 4}")
@@ -676,6 +681,7 @@ def CalculateTakeoff(h: float, t: float):
     logging.debug(f"\tTakeoff acceleration: {a2}")
     logging.debug(f"\tTakeoff Thrust: {takeoffThrust2}")
     logging.debug(f"\tTakeoff RPM: {takeoffRPM2}")
+    logging.debug(f"\tTakeoff Throttle CRSF: {intToCRSF(takeoffThrottle2)}")
     logging.debug(f"\tTakeoff Throttle: {takeoffThrottle2}")
     logging.debug(f"\tTarget thrust at takeoff: {takeoffThrust2}")
     logging.debug(f"\tPredicted thrust at takeoff: {Thrust(takeoffRPM2) * 4}")
@@ -684,10 +690,10 @@ def CalculateTakeoff(h: float, t: float):
 
 def Takeoff(takeoffStage: int):
     if takeoffStage == 1:
-        logging.debug(f"\tSetting throttle to {takeoffThrottle1} for takeoff stage 1...")
+        logging.debug(f"\tSetting throttle to {intToCRSF(takeoffThrottle1)} for takeoff stage 1...")
         passValues(0, 0, 0, takeoffThrottle1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     elif takeoffStage == 2:
-        logging.debug(f"\tSetting throttle to {takeoffThrottle2} for takeoff stage 2...")
+        logging.debug(f"\tSetting throttle to {intToCRSF(takeoffThrottle2)} for takeoff stage 2...")
         passValues(0, 0, 0, takeoffThrottle2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     else:
         logging.debug(f"\tInvalid takeoff stage {takeoffStage}. Must be 1 or 2")
@@ -698,8 +704,8 @@ def CalculateLanding():
     global landingThrottle1
     global landingThrottle2
 
-    # landingThrottle1 = RPMtoThrottle(ThrustToRPM(MASS_N/4))
-    # landingThrottle2 = RPMtoThrottle(ThrustToRPM(MASS_N/4))
+    # landingThrottle1 = CRSFtoInt(RPMtoThrottle(ThrustToRPM(MASS_N/4)))
+    # landingThrottle2 = CRSFtoInt(RPMtoThrottle(ThrustToRPM(MASS_N/4)))
 
     landingThrottle1 = int(remap_range(1220, 1000, 2000, -32760, 32759))
     landingThrottle2 = int(remap_range(1260, 1000, 2000, -32760, 32759))
@@ -726,10 +732,10 @@ def Land(landingStage: int):
 
 
 
-HOVER_THROTTLE = RPMtoThrottle(ThrustToRPM(HOVER_THRUST_MOTOR))
+HOVER_THROTTLE = CRSFtoInt(RPMtoThrottleCRSF(ThrustToRPM(HOVER_THRUST_MOTOR)))
 def Hover():
     passValues(0, 0, 0, HOVER_THROTTLE, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    logging.debug(f"\tHovering with throttle: {HOVER_THROTTLE}")
+    logging.debug(f"\tHovering with throttle: {intToCRSF(HOVER_THROTTLE)}")
 
 def control():
     """Convert the forward, angle, and vertical values to pitch,
@@ -926,7 +932,6 @@ def Update():
         return
     else:
         # logging.debug(f"dt: {dt}")
-        print("Hover throttle: ", HOVER_THROTTLE)
 
         keyPressed = cv.waitKey(1)
 
@@ -971,7 +976,7 @@ def Update():
                     print(f"An error occurred: {e}")
                     cleanup()
             else:
-                state = State.Landing
+                state = State.Flying
                 takeoffCnt = 0
                 print("Flying...")
                 Hover()
@@ -985,16 +990,20 @@ def Update():
                 print("Landing...")
             
             try:
-                followTarget(BLUE)
+                # followTarget(BLUE)
+                pass
             except Exception as e:
                 print(f"An error occurred: {e}")
                 cleanup()
             
             try:
-                control()
+                # control()
+                pass
             except Exception as e:
                 print(f"An error occurred: {e}")
                 cleanup()
+            
+            Hover()
 
         elif state == State.Landing:
             if landingThrottle1 == 0 or landingThrottle2 == 0:
