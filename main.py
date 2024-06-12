@@ -757,7 +757,7 @@ def control():
     logging.debug(f"Theta: {Theta}")
 
     rpm = ThrustToRPM(Thrust/4) # Thrust per motor
-    throttle = RPMtoThrottle(rpm)
+    throttle = CRSFtoInt(RPMtoThrottleCRSF(rpm))
 
     yaw = degPerSecToInt(w_y)
     pitch = degPerSecToInt(Theta) # We are flying in ANGLE mode, which
