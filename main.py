@@ -120,7 +120,7 @@ cap = None
 
 forward = 0 # Move front or back
 angle = 0 # Turn left or right
-vertical = 0 # Move up or down
+vertical = -10 # Move up or down
 
 height = 0 # The calculated height of the drone
 
