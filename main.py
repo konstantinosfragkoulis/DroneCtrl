@@ -38,6 +38,7 @@ state = State.Disarmed
 class FlyingState(IntEnum):
     Hovering = 0
     FollowingObject = 1
+    FlyingForward = 2
 
 flyingState = FlyingState.Hovering
 
@@ -75,8 +76,8 @@ DEG_TO_RAD = 180/PI
 #################################################################
 TAKEOFF_TIME = 0.5 # The time it takes for the drone to take off
 TAKEOFF_HEIGHT = 0.1 # The height the drone will take off to in m
-MASS = 0.31 # The mass of the drone in kg
-LANDING_TIME = 5 # The drone will be descending for this time
+MASS = 0.52 # The mass of the drone in kg
+LANDING_TIME = 1.5 # The drone will be descending for this time
 
 MAX_FORWARD_ACCELERATION = 2 # m/s^2
 MAX_VERTICAL_ACCELERATION = 2 # m/s^2
@@ -772,7 +773,7 @@ def Hover():
 
     forward = 0
     angle = 0
-    vertical = 0
+    vertical = 0.065
 
 def control():
     """Convert the forward, angle, and vertical values to pitch,
@@ -880,24 +881,25 @@ def followTarget(*colors):
     if center is None:
         return
     else:
-        dx = remap_range(center[1], 0, 640, -2, 2)
-        dy = remap_range(center[0], 0, 480, 2, -2)
+        dx = remap_range(center[1], 0, 640, -1, 1, True)
+        dy = remap_range(center[0], 0, 480, 1, -1, True)
 
         angle = dx
         vertical = dy
-        forward = 0.5
+        forward = 0.25
 
-        logging.debug(f"\n\nangle: {angle}")
-        logging.debug(f"vertical: {vertical}\n\n")
+        logging.debug("\n\n")
+        logging.debug(f"\tangle: {angle}")
+        logging.debug(f"\tvertical: {vertical}\n\n")
 
 def flyForward():
     global forward
     global angle
     global vertical
 
-    forward = 0.5
+    forward = 0.15
     angle = 0
-    vertical = 0
+    vertical = 0.065
 
 def Awake():
     """Initialization function that is called first even before Start()"""
@@ -1051,6 +1053,9 @@ def Update():
             elif keyPressed == ord('h'):
                 flyingState = FlyingState.Hovering
                 print("Hovering")
+            elif keyPressed == ord('w'):
+                flyingState = FlyingState.FlyingForward
+                print("Flying forward")
             
 
             if flyingState == FlyingState.Hovering:
@@ -1064,6 +1069,12 @@ def Update():
                 try:
                     followTarget(BLUE)
                     pass
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    cleanup()
+            elif flyingState == FlyingState.FlyingForward:
+                try:
+                    flyForward()
                 except Exception as e:
                     print(f"An error occurred: {e}")
                     cleanup()
