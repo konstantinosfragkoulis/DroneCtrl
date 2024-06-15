@@ -35,13 +35,13 @@ Additionally, you need to change some variables in the python script. Look for t
 Currently, not much works. All you can do is:
 - Automatic takeoff
 - Automatic landing
+- Controlling the drone with easy-to-use functions: Instead of manually setting the yaw, pitch, roll and throttle, you will just set the forward and vertical acceleration, and a helper function will do all of the conversions.
 
 ## Features Currently Being Implemented
-- Controlling the drone with easy-to-use functions: Instead of manually setting the yaw, pitch, roll and throttle, you will just set the forward and vertical acceleration, and a helper function will do all of the conversions.
+- Object tracking
 
 ## Future Features
 The following features are planned to be implemented:
 - Stabilized hover
-- Object tracking
 - Path planning
 - Passing through hoops
