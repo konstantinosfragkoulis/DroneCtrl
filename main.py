@@ -678,8 +678,8 @@ def CalculateTakeoff(h: float, t: float):
     takeoffThrottle2 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM2))
     # End of unnecessary calculations
 
-    takeoffAccel1 = a1/MAX_VERTICAL_ACCELERATION
-    takeoffAccel2 = a2/MAX_VERTICAL_ACCELERATION
+    takeoffAccel1 = clamp(a1/MAX_VERTICAL_ACCELERATION, -1, 1)
+    takeoffAccel2 = clamp(a2/MAX_VERTICAL_ACCELERATION, -1, 1)
 
     logging.debug(f"\tTakeoff acceleration: {a1}")
     logging.debug(f"\tTakeoff speed: {u1}", )
@@ -711,15 +711,15 @@ def Takeoff(takeoffStage: int):
     global takeoffAccel2
 
     if takeoffStage == 1:
-        logging.debug(f"\tSetting acceleration to {takeoffAccel2} for takeoff stage 1...")
+        logging.debug(f"\tSetting acceleration to {takeoffAccel1} for takeoff stage 1...")
         forward = 0
         angle = 0
         vertical = takeoffAccel1
     elif takeoffStage == 2:
-        logging.debug(f"\tSetting acceleration to {takeoffAccel1} for takeoff stage 2...")
+        logging.debug(f"\tSetting acceleration to {takeoffAccel2} for takeoff stage 2...")
         forward = 0
         angle = 0
-        vertical = takeoffAccel1
+        vertical = takeoffAccel2
     else:
         logging.debug(f"\tInvalid takeoff stage {takeoffStage}. Must be 1 or 2")
 
@@ -773,7 +773,7 @@ def Hover():
 
     forward = 0
     angle = 0
-    vertical = 0.065
+    vertical = 0.4
 
 def control():
     """Convert the forward, angle, and vertical values to pitch,
@@ -897,9 +897,9 @@ def flyForward():
     global angle
     global vertical
 
-    forward = 0.15
+    forward = 0.6
     angle = 0
-    vertical = 0.065
+    vertical = 0.4
 
 def Awake():
     """Initialization function that is called first even before Start()"""
