@@ -74,9 +74,9 @@ DEG_TO_RAD = 180/PI
 #################################################################
 ###############  USER EDITABLE VARIABLES - START  ###############
 #################################################################
-TAKEOFF_TIME = 0.5 # The time it takes for the drone to take off
+TAKEOFF_TIME = 0.6 # The time it takes for the drone to take off
 TAKEOFF_HEIGHT = 0.1 # The height the drone will take off to in m
-MASS = 0.52 # The mass of the drone in kg
+MASS = 0.31 # The mass of the drone in kg
 LANDING_TIME = 1.5 # The drone will be descending for this time
 
 MAX_FORWARD_ACCELERATION = 2 # m/s^2
@@ -612,14 +612,14 @@ def ZeroThrottle():
 #################################################################
 ###############  CONVERSION FUNCTIONS - START  ##################
 #################################################################
-const = (PI * RHO * (0.0762**2) * 0.0635) / (3600 * 4 * 30) # * (RPM**2)
+const = (PI * RHO * (0.0762**2) * 0.0635) / (3600 * 4 * 50) # * (RPM**2)
 def Thrust(rpm: int):
     """Calculates the thrust produced by a motor spinning at a given RPM."""
     # Simplified thrust formula: T = (pi * rho * D^2 * n^2 * P) / 4
     global const
     return const * (rpm ** 2)
 
-const2 = math.sqrt((4 * 30 * 3600) / (PI * RHO * (0.0762 ** 2) * 0.0635)) # * sqrt(RPM)
+const2 = math.sqrt((4 * 50 * 3600) / (PI * RHO * (0.0762 ** 2) * 0.0635)) # * sqrt(RPM)
 def ThrustToRPM(thrust: float):
     """Calculates the RPM of a motor needed to produce the given thrust by it."""
     global const2
@@ -682,6 +682,7 @@ def CalculateTakeoff(h: float, t: float):
     takeoffAccel2 = clamp(a2/MAX_VERTICAL_ACCELERATION, -1, 1)
 
     logging.debug(f"\tTakeoff acceleration: {a1}")
+    logging.debug(f"\tClamped takeoff acceleration: {takeoffAccel1}")
     logging.debug(f"\tTakeoff speed: {u1}", )
     logging.debug(f"\tTakeoff Thrust: {takeoffThrust1}")
     logging.debug(f"\tTakeoff RPM: {takeoffRPM1}")
@@ -693,6 +694,7 @@ def CalculateTakeoff(h: float, t: float):
     logging.debug("\n")
 
     logging.debug(f"\tTakeoff acceleration: {a2}")
+    logging.debug(f"\tClamped takeoff acceleration: {takeoffAccel2}")
     logging.debug(f"\tTakeoff Thrust: {takeoffThrust2}")
     logging.debug(f"\tTakeoff RPM: {takeoffRPM2}")
     logging.debug(f"\tTakeoff Throttle CRSF: {intToCRSF(takeoffThrottle2)}")
@@ -773,7 +775,7 @@ def Hover():
 
     forward = 0
     angle = 0
-    vertical = 0.4
+    vertical = 0.5
 
 def control():
     """Convert the forward, angle, and vertical values to pitch,
@@ -897,9 +899,9 @@ def flyForward():
     global angle
     global vertical
 
-    forward = 0.6
+    forward = 1
     angle = 0
-    vertical = 0.4
+    vertical = 0.5
 
 def Awake():
     """Initialization function that is called first even before Start()"""
@@ -1019,6 +1021,12 @@ def Update():
                 # but for consistency, we will use try-except
                 state = State.Disarmed
                 print("Disarmed")
+            else:
+                try:
+                    ZeroThrottle()
+                except Exception as e:
+                    print(f"An error occurred while calling ZeroThrottle() with the drone Grounded: {e}")
+                    cleanup()
 
         elif state == State.TakingOff:
             if takeoffCnt < TAKEOFF_TIME1:
