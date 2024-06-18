@@ -516,6 +516,24 @@ def get_contour_area(contour: NDArray) -> float:
         area = rc_utils.get_contour_area(contour)
     """
     return cv.contourArea(contour)
+"""
+The code above is licensed under the MIT License.
+"""
+def findContour(image, *colors):
+    contours = []
+    for color in colors:
+        contour = get_largest_contour(find_contours(image, color[0], color[1]))
+        if contour is not None:
+            contours.append(contour)
+            draw_contour(image, contour, color[1])
+            center = get_contour_center(contour)
+            draw_circle(image, center)
+    if len(contours) > 0:
+        largest_contour = max(contours, key=get_contour_area)
+        largest_center = get_contour_center(largest_contour)
+        return largest_contour, largest_center
+    else:
+        return None, None
 #################################################################
 ##################  UTILITY FUNCTIONS - END  ####################
 #################################################################
@@ -770,17 +788,9 @@ def Land(landingStage: int):
 
 
 
-def Hover():
-    global forward
-    global sideways
-    global vertical
-    global angle
-
-    forward = 0
-    sideways = 0
-    vertical = 0.5
-    angle = 0
-
+#################################################################
+##################  CONTROL FUNCTIONS - START  ##################
+#################################################################
 def control():
     """Convert the forward, angle, and vertical values to pitch,
     yaw, roll and throttle values and pass them to the drone."""
@@ -846,6 +856,8 @@ def control():
 
 
     logging.debug(f"\tThrust: {Thrust}")
+    logging.debug(f"\tThrust XZ: {ThrustXZ}")
+    logging.debug(f"\tThrust YZ: {ThrustYZ}")
     logging.debug(f"\tRPM: {rpm}")
     logging.debug(f"\tThrottle: {throttle}")
     logging.debug(f"\tThrottle CRSF: {intToCRSF(throttle)}")
@@ -857,23 +869,27 @@ def control():
 
     passValues(yaw, pitch, roll, throttle, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+def Hover():
+    global forward
+    global sideways
+    global vertical
+    global angle
 
+    forward = 0
+    sideways = 0
+    vertical = 0.5
+    angle = 0
 
-def findContour(image, *colors):
-    contours = []
-    for color in colors:
-        contour = get_largest_contour(find_contours(image, color[0], color[1]))
-        if contour is not None:
-            contours.append(contour)
-            draw_contour(image, contour, color[1])
-            center = get_contour_center(contour)
-            draw_circle(image, center)
-    if len(contours) > 0:
-        largest_contour = max(contours, key=get_contour_area)
-        largest_center = get_contour_center(largest_contour)
-        return largest_contour, largest_center
-    else:
-        return None, None
+def flyForward():
+    global forward
+    global sideways
+    global vertical
+    global angle
+
+    forward = 1
+    sideways = 0
+    vertical = 0.5
+    angle = 0
 
 def followHoops():
     global image
@@ -911,19 +927,45 @@ def followTarget(*colors):
         forward = 0.25
 
         logging.debug("\n\n")
-        logging.debug(f"\tangle: {angle}")
-        logging.debug(f"\tvertical: {vertical}\n\n")
+        logging.debug(f"\tAngle: {angle}")
+        logging.debug(f"\tVertical: {vertical}\n\n")
 
-def flyForward():
+def Stabilize():
     global forward
     global sideways
     global vertical
     global angle
+    global image
 
-    forward = 1
+    forward = 0
     sideways = 0
     vertical = 0.5
     angle = 0
+
+    contour, center = findContour(image, GREEN)
+    if center is None:
+        return
+    else:
+        dx = remap_range(center[1], 0, 640, -1, 1, True)
+        dy = remap_range(center[0], 0, 480, 1, -1, True)
+
+        forward = 0
+        sideways = dx
+        vertical = dy + 0.5
+        angle = 0
+
+        logging.debug("\n\n")
+        logging.debug(f"\tSideways: {sideways}")
+        logging.debug(f"\tVertical: {vertical}\n\n")
+
+#################################################################
+###################  CONTROL FUNCTIONS - END  ###################
+#################################################################
+
+
+
+
+
 
 def Awake():
     """Initialization function that is called first even before Start()"""
