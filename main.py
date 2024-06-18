@@ -39,6 +39,7 @@ class FlyingState(IntEnum):
     Hovering = 0
     FollowingObject = 1
     FlyingForward = 2
+    StabilizedHover = 3
 
 flyingState = FlyingState.Hovering
 
@@ -77,7 +78,7 @@ DEG_TO_RAD = 180/PI
 TAKEOFF_TIME = 0.6 # The time it takes for the drone to take off
 TAKEOFF_HEIGHT = 0.1 # The height the drone will take off to in meters
 MASS = 0.31 # The mass of the drone in kg
-LANDING_TIME = 1.5 # The drone will be descending for this time
+LANDING_TIME = 3 # The drone will be descending for this time
 
 MAX_FORWARD_ACCELERATION = 2 # m/s^2
 MAX_SIDEWAYS_ACCELERATION = 2 # m/s^2
@@ -701,8 +702,8 @@ def CalculateTakeoff(h: float, t: float):
     takeoffThrottle2 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM2))
     # End of unnecessary calculations
 
-    takeoffAccel1 = clamp(a1/MAX_VERTICAL_ACCELERATION, -1, 1)
-    takeoffAccel2 = clamp(a2/MAX_VERTICAL_ACCELERATION, -1, 1)
+    takeoffAccel1 = clamp((a1/MAX_VERTICAL_ACCELERATION), -1, 1)
+    takeoffAccel2 = clamp((a2/MAX_VERTICAL_ACCELERATION), -1, 1)
 
     logging.debug(f"\tTakeoff acceleration: {a1}")
     logging.debug(f"\tClamped takeoff acceleration: {takeoffAccel1}")
@@ -1138,12 +1139,15 @@ def Update():
             elif keyPressed == ord('w'):
                 flyingState = FlyingState.FlyingForward
                 print("Flying forward")
+            elif keyPressed == ord('a'):
+                flyingState = FlyingState.StabilizedHover
+                print("Stabilized hover")
             
 
             if flyingState == FlyingState.Hovering:
                 logging.debug("Hovering")
                 try:
-                    Stabilize() # Stabilized hover
+                    Hover()
                 except Exception as e:
                     print(f"An error occurred: {e}")
                     cleanup()
@@ -1157,6 +1161,12 @@ def Update():
             elif flyingState == FlyingState.FlyingForward:
                 try:
                     flyForward()
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    cleanup()
+            elif flyingState == FlyingState.StabilizedHover:
+                try:
+                    Stabilize()
                 except Exception as e:
                     print(f"An error occurred: {e}")
                     cleanup()
