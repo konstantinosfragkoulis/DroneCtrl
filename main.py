@@ -822,6 +822,13 @@ def control():
 
     logging.debug(f"\ta_x: , {a_x}, a_y: {a_y}, a_z: , {a_z}, w_y: , {w_y}")
 
+    _thrustConstXZ = 0
+    ThrustXZ = 0
+    _thrustConstYZ = 0
+    ThrustYZ = 0
+    Theta = 0
+    Phi = 0
+
     if vertical == -10:
         Thrust = 0
         Theta = 0
@@ -960,6 +967,7 @@ def Stabilize():
         logging.debug("\n\n")
         logging.debug(f"\tSideways: {sideways}")
         logging.debug(f"\tVertical: {vertical}\n\n")
+        logging.debug("\n\n")
 #################################################################
 ###################  CONTROL FUNCTIONS - END  ###################
 #################################################################
@@ -1135,7 +1143,7 @@ def Update():
             if flyingState == FlyingState.Hovering:
                 logging.debug("Hovering")
                 try:
-                    Hover()
+                    Stabilize() # Stabilized hover
                 except Exception as e:
                     print(f"An error occurred: {e}")
                     cleanup()
