@@ -647,10 +647,11 @@ def ThrustToRPM(thrust: float):
     global const2
     return int((math.sqrt(thrust)) * const2)
 
-# TODO: optimize constants which are calculated every time
+const3 = 1/(10196720000**1.011358)
 def RPMtoThrottleCRSF(rpm: int):
     """Converts the RPM of a motor to a CRSF throttle value [1000, 2000]."""
-    return int(270782500 + (970.5814 - 270782500)/(1 + (rpm/10196720000)**1.011358))
+    global const3
+    return int(270782500 + (-270781529.4186)/(1 + rpm**1.011358 * const3))
 
 def CRSFtoInt(value: int):
     """Converts from CRSF [1000, 2000] to int16 [-32768, 32767]."""
@@ -664,10 +665,10 @@ def intToDegPerSec(value: int):
     """Converts Pitch, Roll, and Yaw values [-32768, 32767] to degrees per second."""
     return 0.02534762*value + 0.02909812
 
-const3 = 0.02909812/0.02534762
+const4 = 0.02909812/0.02534762
 def degPerSecToInt(value: float):
     """Converts degrees per second to int16 [-32768, 32767]."""
-    return int(value/0.02534762 - const3)
+    return int(value/0.02534762 - const4)
 #################################################################
 ################  CONVERSION FUNCTIONS - END  ###################
 #################################################################
