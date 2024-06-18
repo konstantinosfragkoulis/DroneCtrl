@@ -32,7 +32,7 @@ IMPORTANT! For the program to work without any modifications, the drone needs to
 Additionally, you need to change some variables in the python script. Look for the section "USER EDITABLE VARIABLES". There, it is important to change the constant `MASS` to the mass of your drone in kilograms.
 
 ## Features
-Currently, few things works. All you can do is:
+Currently, few things work. All you can do is:
 - Automatic takeoff
 - Automatic landing
 - Controlling the drone with easy-to-use functions: Instead of manually setting the yaw, pitch, roll and throttle, you will just set the forward and vertical acceleration, and a helper function will do all of the conversions.
