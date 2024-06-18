@@ -32,16 +32,20 @@ IMPORTANT! For the program to work without any modifications, the drone needs to
 Additionally, you need to change some variables in the python script. Look for the section "USER EDITABLE VARIABLES". There, it is important to change the constant `MASS` to the mass of your drone in kilograms.
 
 ## Features
-Currently, not much works. All you can do is:
+Currently, few things works. All you can do is:
 - Automatic takeoff
 - Automatic landing
 - Controlling the drone with easy-to-use functions: Instead of manually setting the yaw, pitch, roll and throttle, you will just set the forward and vertical acceleration, and a helper function will do all of the conversions.
 
-## Features Currently Being Implemented
+## Implemeted Features That are Currently Being Tested
+Features which have been implemented and are currently being tested. Most likely there will be improvements.
 - Object tracking
+- Stabilized hover
+
+## Features Currently Being Implemented
+Features that are currently being implemented. If there are features for testing, they will be tested before implementing new ones.
+- Passing through hoops
 
 ## Future Features
-The following features are planned to be implemented:
-- Stabilized hover
+Features that are planned to be implemented:
 - Path planning
-- Passing through hoops
