@@ -80,6 +80,7 @@ MASS = 0.31 # The mass of the drone in kg
 LANDING_TIME = 1.5 # The drone will be descending for this time
 
 MAX_FORWARD_ACCELERATION = 2 # m/s^2
+MAX_SIDEWAYS_ACCELERATION = 2 # m/s^2
 MAX_VERTICAL_ACCELERATION = 2 # m/s^2
 MAX_ANGULAR_ACCELERATION = 90 # degrees/s^2
 #################################################################
@@ -120,8 +121,9 @@ values = None
 cap = None
 
 forward = 0 # Move front or back
-angle = 0 # Turn left or right
+sideways = 0 # Move left or right
 vertical = -10 # Move up or down
+angle = 0 # Turn left or right
 
 height = 0 # The calculated height of the drone
 
@@ -706,8 +708,8 @@ def CalculateTakeoff(h: float, t: float):
 
 def Takeoff(takeoffStage: int):
     global forward
-    global angle
     global vertical
+    global angle
 
     global takeoffAccel1
     global takeoffAccel2
@@ -715,13 +717,13 @@ def Takeoff(takeoffStage: int):
     if takeoffStage == 1:
         logging.debug(f"\tSetting acceleration to {takeoffAccel1} for takeoff stage 1...")
         forward = 0
-        angle = 0
         vertical = takeoffAccel1
+        angle = 0
     elif takeoffStage == 2:
         logging.debug(f"\tSetting acceleration to {takeoffAccel2} for takeoff stage 2...")
         forward = 0
-        angle = 0
         vertical = takeoffAccel2
+        angle = 0
     else:
         logging.debug(f"\tInvalid takeoff stage {takeoffStage}. Must be 1 or 2")
 
@@ -743,21 +745,21 @@ def CalculateLanding():
 
 def Land(landingStage: int):
     global forward
-    global angle
     global vertical
+    global angle
     
     global landingAccel1
     global landingAccel2
     if landingStage == 1:
         logging.debug(f"\tSetting acceleration to {landingAccel1} for landing stage 1...")
         forward = 0
-        angle = 0
         vertical = landingAccel1
+        angle = 0
     elif landingStage == 2:
         logging.debug(f"\tSetting acceleration to {landingAccel2} for landing stage 2...")
         forward = 0
-        angle = 0
         vertical = landingAccel2
+        angle = 0
     else:
         logging.debug(f"\tInvalid landing stage {landingStage}. Must be 1 or 2")
 #################################################################
@@ -770,19 +772,22 @@ def Land(landingStage: int):
 
 def Hover():
     global forward
-    global angle
+    global sideways
     global vertical
+    global angle
 
     forward = 0
-    angle = 0
+    sideways = 0
     vertical = 0.5
+    angle = 0
 
 def control():
     """Convert the forward, angle, and vertical values to pitch,
     yaw, roll and throttle values and pass them to the drone."""
     global forward
-    global angle
+    global sideways
     global vertical
+    global angle
 
     if forward > 1 or forward < -1:
         print(f"\tInvalid forward value {forward}. Must be between -1 and 1.")
@@ -793,47 +798,62 @@ def control():
     elif (vertical > 1 or vertical < -1) and not vertical == -10:
         print(f"\tInvalid vertical value {vertical}. Must be between -1 and 1.")
         cleanup()
+    elif sideways > 1 or sideways < -1:
+        print(f"\tInvalid sideways value {sideways}. Must be between -1 and 1.")
+        cleanup()
 
     a_x = forward*MAX_FORWARD_ACCELERATION
+    a_y = sideways*MAX_SIDEWAYS_ACCELERATION
     a_z = vertical*MAX_VERTICAL_ACCELERATION
     w_y = angle*MAX_ANGULAR_ACCELERATION
 
-    logging.debug(f"\ta_x: , {a_x}, a_z: , {a_z}, w_y: , {w_y}")
+    logging.debug(f"\ta_x: , {a_x}, a_y: {a_y}, a_z: , {a_z}, w_y: , {w_y}")
 
     if vertical == -10:
         Thrust = 0
         Theta = 0
         rpm = 0
-        throttle = -32760
         yaw = 0
         pitch = 0
         roll = 0
+        throttle = -32760
     else:
-        _thrustConst = math.sqrt((a_z+G)**2 + a_x**2)
-        Thrust = MASS * _thrustConst
-        Theta = math.asin(a_x/_thrustConst) * DEG_TO_RAD
+        _thrustConstXZ = math.sqrt((a_z+G)**2 + a_x**2)
+        ThrustXZ = MASS * _thrustConstXZ
+        Theta = math.asin(a_x/_thrustConstXZ) * DEG_TO_RAD
 
         logging.debug(f"\tTheta: {Theta}")
+
+        _thrustConstYZ = math.sqrt((a_z+G)**2 + a_y**2)
+        ThrustYZ = MASS * _thrustConstYZ
+        Phi = math.asin(a_y/_thrustConstYZ) * DEG_TO_RAD
+
+        logging.debug(f"\tPhi: {Phi}")
+
+        Thrust = MASS * math.sqrt(a_x**2 + a_y**2 + (a_z+G)**2)
 
         rpm = ThrustToRPM(Thrust/4) # Thrust per motor
         throttle = CRSFtoInt(RPMtoThrottleCRSF(rpm))
 
         yaw = degPerSecToInt(w_y)
-        pitch = degPerSecToInt(Theta) # We are flying in ANGLE mode, which
-                                    # means that the stick position is the
-                                    # pitch of the drone, not the acceleration
-                                    # of the pitch. Thus, degrees per second
-                                    # is not actually degrees per second, but
-                                    # rather just degrees.
-        roll = 0
+        pitch = degPerSecToInt(Theta)
+        roll = degPerSecToInt(Phi)
+        # We are flying in ANGLE mode, which means that the stick
+        # position is the pitch of the drone, not the acceleration
+        # of the pitch. Thus, degrees per second is not actually
+        # degrees per second, but rather just degrees.
+        # The same applies to roll
+
 
     logging.debug(f"\tThrust: {Thrust}")
     logging.debug(f"\tRPM: {rpm}")
     logging.debug(f"\tThrottle: {throttle}")
     logging.debug(f"\tThrottle CRSF: {intToCRSF(throttle)}")
     logging.debug(f"\tPitch angle: {Theta}")
+    logging.debug(f"\tRoll angle: {Phi}")
     logging.debug(f"\tPitch: {pitch}")
     logging.debug(f"\tYaw: {yaw}")
+    logging.debug(f"\tRoll: {roll}")
 
     passValues(yaw, pitch, roll, throttle, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
@@ -896,12 +916,14 @@ def followTarget(*colors):
 
 def flyForward():
     global forward
-    global angle
+    global sideways
     global vertical
+    global angle
 
     forward = 1
-    angle = 0
+    sideways = 0
     vertical = 0.5
+    angle = 0
 
 def Awake():
     """Initialization function that is called first even before Start()"""
