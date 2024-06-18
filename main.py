@@ -1004,7 +1004,7 @@ def Start():
     logging.debug("\tShared memory initialized")
     logging.debug("\tInitializing camera...")
     
-    cap = cv.VideoCapture("/dev/video0")
+    cap = cv.VideoCapture("/dev/video2")
     
     logging.debug("\tCamera initialized")
     logging.debug("\tDisarming drone...")
