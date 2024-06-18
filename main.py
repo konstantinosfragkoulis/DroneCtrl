@@ -953,7 +953,7 @@ def Stabilize():
     vertical = 0
     angle = 0
 
-    contour, center = findContour(image, GREEN)
+    contour, center = findContour(image, BLUE)
     if center is None:
         return
     else:
@@ -1004,7 +1004,7 @@ def Start():
     logging.debug("\tShared memory initialized")
     logging.debug("\tInitializing camera...")
     
-    cap = cv.VideoCapture("/dev/video2")
+    cap = cv.VideoCapture("/dev/video0")
     
     logging.debug("\tCamera initialized")
     logging.debug("\tDisarming drone...")
