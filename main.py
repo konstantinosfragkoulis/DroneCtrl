@@ -75,7 +75,7 @@ DEG_TO_RAD = 180/PI
 ###############  USER EDITABLE VARIABLES - START  ###############
 #################################################################
 TAKEOFF_TIME = 0.6 # The time it takes for the drone to take off
-TAKEOFF_HEIGHT = 0.1 # The height the drone will take off to in m
+TAKEOFF_HEIGHT = 0.1 # The height the drone will take off to in meters
 MASS = 0.31 # The mass of the drone in kg
 LANDING_TIME = 1.5 # The drone will be descending for this time
 
@@ -83,6 +83,8 @@ MAX_FORWARD_ACCELERATION = 2 # m/s^2
 MAX_SIDEWAYS_ACCELERATION = 2 # m/s^2
 MAX_VERTICAL_ACCELERATION = 2 # m/s^2
 MAX_ANGULAR_ACCELERATION = 90 # degrees/s^2
+
+VERTICAL_ACCELERATION_OFFSET = 0.5 # The drone hovers at this acceleration
 #################################################################
 ################  USER EDITABLE VARIABLES - END  ################
 #################################################################
@@ -814,7 +816,7 @@ def control():
 
     a_x = forward*MAX_FORWARD_ACCELERATION
     a_y = sideways*MAX_SIDEWAYS_ACCELERATION
-    a_z = vertical*MAX_VERTICAL_ACCELERATION
+    a_z = (vertical+VERTICAL_ACCELERATION_OFFSET)*MAX_VERTICAL_ACCELERATION
     w_y = angle*MAX_ANGULAR_ACCELERATION
 
     logging.debug(f"\ta_x: , {a_x}, a_y: {a_y}, a_z: , {a_z}, w_y: , {w_y}")
@@ -877,7 +879,7 @@ def Hover():
 
     forward = 0
     sideways = 0
-    vertical = 0.5
+    vertical = 0
     angle = 0
 
 def flyForward():
@@ -888,7 +890,7 @@ def flyForward():
 
     forward = 1
     sideways = 0
-    vertical = 0.5
+    vertical = 0
     angle = 0
 
 def followHoops():
@@ -939,7 +941,7 @@ def Stabilize():
 
     forward = 0
     sideways = 0
-    vertical = 0.5
+    vertical = 0
     angle = 0
 
     contour, center = findContour(image, GREEN)
@@ -951,13 +953,12 @@ def Stabilize():
 
         forward = 0
         sideways = dx
-        vertical = dy + 0.5
+        vertical = dy
         angle = 0
 
         logging.debug("\n\n")
         logging.debug(f"\tSideways: {sideways}")
         logging.debug(f"\tVertical: {vertical}\n\n")
-
 #################################################################
 ###################  CONTROL FUNCTIONS - END  ###################
 #################################################################
