@@ -13,15 +13,19 @@ def control():
     if c.forward > 1 or c.forward < -1:
         print(f"\tInvalid forward value {c.forward}. Must be between -1 and 1.")
         cleanup()
+        return
     elif c.angle > 1 or c.angle < -1:
         print(f"\tInvalid angle value {c.angle}. Must be between -1 and 1.")
         cleanup()
+        return
     elif (c.vertical > 1 or c.vertical < -1) and not c.vertical == -10:
         print(f"\tInvalid vertical value {c.vertical}. Must be between -1 and 1.")
         cleanup()
+        return
     elif c.sideways > 1 or c.sideways < -1:
         print(f"\tInvalid sideways value {c.sideways}. Must be between -1 and 1.")
         cleanup()
+        return
 
     c.a_x = c.forward*MAX_FORWARD_ACCELERATION
     c.a_y = c.sideways*MAX_SIDEWAYS_ACCELERATION

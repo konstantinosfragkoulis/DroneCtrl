@@ -36,7 +36,7 @@ VERTICAL_ACCELERATION_OFFSET = 0.5 # The drone hovers at this acceleration
 
 TAKEOFF_TIME1 = 2 * TAKEOFF_TIME / 3
 TAKEOFF_TIME2 = TAKEOFF_TIME / 3
-MASS_N = MASS * G # The weight of the drone in Newtons
+WEIGHT = MASS * G
 LANDING_TIME1 = LANDING_TIME / 3
 
 
@@ -75,21 +75,11 @@ class Config:
 
     flyingState = FlyingState.Hovering
 
-    running = True # The main loop of the program
+    running = True
 
-
-
-
-
-    #################################################################
-    ####################  SHARED MEMORY - START  ####################
-    #################################################################
     memory = None
     map_file = None
     values = None
-    #################################################################
-    #####################  SHARED MEMORY - END  #####################
-    #################################################################
     cap = None
 
     forward = 0 # Move front or back
@@ -102,10 +92,6 @@ class Config:
     image = None # The current image from the camera
 
     dt = 0 # The time difference between to Update calls
-
-
-
-
 
     #################################################################
     ############  TAKEOFF AND LANDING VARIABLES - START  ############

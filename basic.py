@@ -1,5 +1,4 @@
 import sys
-import os
 import cv2 as cv
 import struct
 import logging

@@ -12,13 +12,13 @@ def CalculateTakeoff(h: float, t: float):
     a1 = (3 * h)/(t ** 2)
 
     # This is not necessary for takeoff, but it is useful for debugging
-    takeoffThrust1 = MASS * (a1 + G)
+    takeoffThrust1 = WEIGHT * (a1 + G)
     takeoffRPM1 = ThrustToRPM(takeoffThrust1/4) # Thrust per motor
     takeoffThrottle1 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM1))
     u1 = (2 * a1 * t)/3
 
     a2  = -3 * u1/t # This, however, is necessary for takeoff
-    takeoffThrust2 = MASS * (a2 + G)
+    takeoffThrust2 = WEIGHT * (a2 + G)
     takeoffRPM2 = ThrustToRPM(takeoffThrust2/4) # Thrust per motor
     takeoffThrottle2 = CRSFtoInt(RPMtoThrottleCRSF(takeoffRPM2))
     # End of unnecessary calculations
@@ -67,8 +67,8 @@ def Takeoff(takeoffStage: int):
 def CalculateLanding():
     """Calculates the thrust needed for the drone to land relatively slowly.""" 
 
-    # landingThrottle1 = CRSFtoInt(RPMtoThrottle(ThrustToRPM(MASS_N/4)))
-    # landingThrottle2 = CRSFtoInt(RPMtoThrottle(ThrustToRPM(MASS_N/4)))
+    # landingThrottle1 = CRSFtoInt(RPMtoThrottle(ThrustToRPM(WEIGHT/4)))
+    # landingThrottle2 = CRSFtoInt(RPMtoThrottle(ThrustToRPM(WEIGHT/4)))
 
     c.landingAccel1 = -0.2
     c.landingAccel2 = -0.1
