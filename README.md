@@ -4,6 +4,8 @@ DroneCtrl is a Python program for controlling and programming autonomous drones.
 
 It is built to work with [ELRS Joystic Control](https://github.com/kaack/elrs-joystick-control), an awesome project that allows you to control your ELRS FPV drone from your computer using a joystick. In order for the two programs to communicate, I have modified ELRS Joystick Control, and you can get my fork [here](https://github.com/konstantinosfragkoulis/elrs-joystick-control).
 
+*This program is still experimental! Currently, there is only support for linux and the drone must be a quadcopter running Betaflight and using ELRS. Also, the conversion functions that calculate the thrust, RPM, throttle, etc. are specific to my drone. You will most likely need to adjust them to work with your drone.*
+
 ## Installation
 To run the program, you need to have Python 3 installed on your computer.
 Also, you need to install the following libraries:
@@ -29,7 +31,7 @@ Or you can run ```python3 main.py -v``` to log debug messages.
 
 IMPORTANT! For the program to work without any modifications, the drone needs to be in ANGLE mode. You can change that in Betaflight. Also, you need to make sure that the PID tuning is correct - that is make the throttle, yaw, pitch and roll curves linear. Without doing the above, the program will not work correctly and the drone will probably crash.
 
-Additionally, you need to change some variables in the python script. Look for the section "USER EDITABLE VARIABLES". There, it is important to change the constant `MASS` to the mass of your drone in kilograms.
+Additionally, you need to change some variables in the `config.py` script. Look for the section "USER EDITABLE VARIABLES". There, you must at least change the constant `MASS` to the mass of your drone in kilograms.
 
 ## Features
 Currently, few things work. All you can do is:

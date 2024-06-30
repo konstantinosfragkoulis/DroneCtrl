@@ -8,7 +8,7 @@ import cv2 as cv
 
 def control():
     """Convert the forward, angle, and vertical values to c.pitch,
-    c.yaw, c.roll and c.throttle values and pass them to the drone."""
+    yaw, roll and throttle values and pass them to the drone."""
 
     if c.forward > 1 or c.forward < -1:
         print(f"\tInvalid forward value {c.forward}. Must be between -1 and 1.")
@@ -28,8 +28,6 @@ def control():
     c.a_z = (c.vertical+VERTICAL_ACCELERATION_OFFSET)*MAX_VERTICAL_ACCELERATION
     c.w_y = c.angle*MAX_ANGULAR_ACCELERATION
 
-    logging.debug(f"\ta_x: , {c.a_x}, a_y: {c.a_y}, a_z: , {c.a_z}, w_y: , {c.w_y}")
-
     _thrustConstXZ = 0
     c.ThrustXZ = 0
     _thrustConstYZ = 0
@@ -45,18 +43,15 @@ def control():
         c.pitch = 0
         c.roll = 0
         c.throttle = -32760
+        c.throttleCRSF = intToCRSF(c.throttle)
     else:
         _thrustConstXZ = math.sqrt((c.a_z+G)**2 + c.a_x**2)
         c.ThrustXZ = MASS * _thrustConstXZ
         c.Theta = math.asin(c.a_x/_thrustConstXZ) * DEG_TO_RAD
 
-        logging.debug(f"\tTheta: {c.Theta}")
-
         _thrustConstYZ = math.sqrt((c.a_z+G)**2 + c.a_y**2)
         c.ThrustYZ = MASS * _thrustConstYZ
         c.Phi = math.asin(c.a_y/_thrustConstYZ) * DEG_TO_RAD
-
-        logging.debug(f"\tPhi: {c.Phi}")
 
         c.Thrust = MASS * math.sqrt(c.a_x**2 + c.a_y**2 + (c.a_z+G)**2)
 
@@ -71,20 +66,7 @@ def control():
         # position is the pitch of the drone, not the acceleration
         # of the pitch. Thus, degrees per second is not actually
         # degrees per second, but rather just degrees.
-        # The same applies to roll
-
-
-    logging.debug(f"\tThrust: {c.Thrust}")
-    logging.debug(f"\tThrust XZ: {c.ThrustXZ}")
-    logging.debug(f"\tThrust YZ: {c.ThrustYZ}")
-    logging.debug(f"\tRPM: {c.rpm}")
-    logging.debug(f"\tThrottle: {c.throttle}")
-    logging.debug(f"\tThrottle CRSF: {c.throttleCRSF}")
-    logging.debug(f"\tPitch angle: {c.Theta}")
-    logging.debug(f"\tRoll angle: {c.Phi}")
-    logging.debug(f"\tPitch: {c.pitch}")
-    logging.debug(f"\tYaw: {c.yaw}")
-    logging.debug(f"\tRoll: {c.roll}")
+        # The same applies to roll.
 
     passValues(c.yaw, c.pitch, c.roll, c.throttle, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
