@@ -120,3 +120,20 @@ class Config:
     #################################################################
     #############  TAKEOFF AND LANDING VARIABLES - END  #############
     #################################################################
+
+    a_x = 0
+    a_y = 0
+    a_z = 0
+    w_y = 0
+
+    Thrust = 0
+    ThrustXZ = 0
+    ThrustYZ = 0
+    rpm = 0
+    throttle = 0
+    throttleCRSF = 0
+    Theta = 0
+    Phi = 0
+    pitch = 0
+    yaw = 0
+    roll = 0

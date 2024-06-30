@@ -226,6 +226,7 @@ def Update():
             c.running = False
         
         cv.imshow("frame", c.image)
+        printDebugInfo()
 
 
 if __name__ == "__main__":

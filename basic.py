@@ -5,6 +5,8 @@ import logging
 from time import sleep
 from config import *
 from config import Config as c
+from tabulate import tabulate
+from conversions import *
 
 def cleanup():
     c.running = False
@@ -62,3 +64,19 @@ def ZeroThrottle():
     c.forward = 0
     c.angle = 0
     c.vertical = -10
+
+def printDebugInfo():
+    """Prints debug information when the -v flag is passed to the program."""
+    headers = ["States", "", "CRSF", "int16", "Angle", "", "Accelerations"]
+    data = [
+        {"State": c.state.name,       "1": "Yaw",      "CRSF": intToCRSF(c.yaw),   "int16": c.yaw,      "Angle": round(intToDegPerSec(c.w_y), 4), "2": "x:", "Accelerations": c.a_x},
+        {"State": c.flyingState.name, "1": "Pitch",    "CRSF": intToCRSF(c.pitch), "int16": c.pitch,    "Angle": round(c.Theta, 4),               "2": "y:", "Accelerations": c.a_y},
+        {"State": "",                 "1": "Roll",     "CRSF": intToCRSF(c.roll),  "int16": c.roll,     "Angle": round(c.Phi, 4),                 "2": "z:", "Accelerations": c.a_z},
+        {"State": "",                 "1": "Throttle", "CRSF": c.throttleCRSF,     "int16": c.throttle, "Angle": round(c.angle, 4),               "2": "w:", "Accelerations": c.w_y},
+    ]
+
+    table_data = [[item["State"], item["1"], item["CRSF"], item["int16"], item["Angle"], item["2"], item["Accelerations"]] for item in data]
+
+    # Print the table
+    print(tabulate(table_data, headers=headers))
+

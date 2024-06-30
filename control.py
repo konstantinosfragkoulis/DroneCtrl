@@ -7,9 +7,9 @@ from utils import *
 import cv2 as cv
 
 def control():
-    """Convert the forward, angle, and vertical values to pitch,
-    yaw, roll and throttle values and pass them to the drone."""
-    
+    """Convert the forward, angle, and vertical values to c.pitch,
+    c.yaw, c.roll and c.throttle values and pass them to the drone."""
+
     if c.forward > 1 or c.forward < -1:
         print(f"\tInvalid forward value {c.forward}. Must be between -1 and 1.")
         cleanup()
@@ -23,49 +23,50 @@ def control():
         print(f"\tInvalid sideways value {c.sideways}. Must be between -1 and 1.")
         cleanup()
 
-    a_x = c.forward*MAX_FORWARD_ACCELERATION
-    a_y = c.sideways*MAX_SIDEWAYS_ACCELERATION
-    a_z = (c.vertical+VERTICAL_ACCELERATION_OFFSET)*MAX_VERTICAL_ACCELERATION
-    w_y = c.angle*MAX_ANGULAR_ACCELERATION
+    c.a_x = c.forward*MAX_FORWARD_ACCELERATION
+    c.a_y = c.sideways*MAX_SIDEWAYS_ACCELERATION
+    c.a_z = (c.vertical+VERTICAL_ACCELERATION_OFFSET)*MAX_VERTICAL_ACCELERATION
+    c.w_y = c.angle*MAX_ANGULAR_ACCELERATION
 
-    logging.debug(f"\ta_x: , {a_x}, a_y: {a_y}, a_z: , {a_z}, w_y: , {w_y}")
+    logging.debug(f"\ta_x: , {c.a_x}, a_y: {c.a_y}, a_z: , {c.a_z}, w_y: , {c.w_y}")
 
     _thrustConstXZ = 0
-    ThrustXZ = 0
+    c.ThrustXZ = 0
     _thrustConstYZ = 0
-    ThrustYZ = 0
-    Theta = 0
-    Phi = 0
+    c.ThrustYZ = 0
+    c.Theta = 0
+    c.Phi = 0
 
     if c.vertical == -10:
-        Thrust = 0
-        Theta = 0
-        rpm = 0
-        yaw = 0
-        pitch = 0
-        roll = 0
-        throttle = -32760
+        c.Thrust = 0
+        c.Theta = 0
+        c.rpm = 0
+        c.yaw = 0
+        c.pitch = 0
+        c.roll = 0
+        c.throttle = -32760
     else:
-        _thrustConstXZ = math.sqrt((a_z+G)**2 + a_x**2)
-        ThrustXZ = MASS * _thrustConstXZ
-        Theta = math.asin(a_x/_thrustConstXZ) * DEG_TO_RAD
+        _thrustConstXZ = math.sqrt((c.a_z+G)**2 + c.a_x**2)
+        c.ThrustXZ = MASS * _thrustConstXZ
+        c.Theta = math.asin(c.a_x/_thrustConstXZ) * DEG_TO_RAD
 
-        logging.debug(f"\tTheta: {Theta}")
+        logging.debug(f"\tTheta: {c.Theta}")
 
-        _thrustConstYZ = math.sqrt((a_z+G)**2 + a_y**2)
-        ThrustYZ = MASS * _thrustConstYZ
-        Phi = math.asin(a_y/_thrustConstYZ) * DEG_TO_RAD
+        _thrustConstYZ = math.sqrt((c.a_z+G)**2 + c.a_y**2)
+        c.ThrustYZ = MASS * _thrustConstYZ
+        c.Phi = math.asin(c.a_y/_thrustConstYZ) * DEG_TO_RAD
 
-        logging.debug(f"\tPhi: {Phi}")
+        logging.debug(f"\tPhi: {c.Phi}")
 
-        Thrust = MASS * math.sqrt(a_x**2 + a_y**2 + (a_z+G)**2)
+        c.Thrust = MASS * math.sqrt(c.a_x**2 + c.a_y**2 + (c.a_z+G)**2)
 
-        rpm = ThrustToRPM(Thrust/4) # Thrust per motor
-        throttle = CRSFtoInt(RPMtoThrottleCRSF(rpm))
+        c.rpm = ThrustToRPM(c.Thrust/4) # Thrust per motor
+        c.throttleCRSF = RPMtoThrottleCRSF(c.rpm)
+        c.throttle = CRSFtoInt(c.throttleCRSF)
 
-        yaw = degPerSecToInt(w_y)
-        pitch = degPerSecToInt(Theta)
-        roll = degPerSecToInt(Phi)
+        c.yaw = degPerSecToInt(c.w_y)
+        c.pitch = degPerSecToInt(c.Theta)
+        c.roll = degPerSecToInt(c.Phi)
         # We are flying in ANGLE mode, which means that the stick
         # position is the pitch of the drone, not the acceleration
         # of the pitch. Thus, degrees per second is not actually
@@ -73,19 +74,19 @@ def control():
         # The same applies to roll
 
 
-    logging.debug(f"\tThrust: {Thrust}")
-    logging.debug(f"\tThrust XZ: {ThrustXZ}")
-    logging.debug(f"\tThrust YZ: {ThrustYZ}")
-    logging.debug(f"\tRPM: {rpm}")
-    logging.debug(f"\tThrottle: {throttle}")
-    logging.debug(f"\tThrottle CRSF: {intToCRSF(throttle)}")
-    logging.debug(f"\tPitch c.angle: {Theta}")
-    logging.debug(f"\tRoll c.angle: {Phi}")
-    logging.debug(f"\tPitch: {pitch}")
-    logging.debug(f"\tYaw: {yaw}")
-    logging.debug(f"\tRoll: {roll}")
+    logging.debug(f"\tThrust: {c.Thrust}")
+    logging.debug(f"\tThrust XZ: {c.ThrustXZ}")
+    logging.debug(f"\tThrust YZ: {c.ThrustYZ}")
+    logging.debug(f"\tRPM: {c.rpm}")
+    logging.debug(f"\tThrottle: {c.throttle}")
+    logging.debug(f"\tThrottle CRSF: {c.throttleCRSF}")
+    logging.debug(f"\tPitch angle: {c.Theta}")
+    logging.debug(f"\tRoll angle: {c.Phi}")
+    logging.debug(f"\tPitch: {c.pitch}")
+    logging.debug(f"\tYaw: {c.yaw}")
+    logging.debug(f"\tRoll: {c.roll}")
 
-    passValues(yaw, pitch, roll, throttle, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    passValues(c.yaw, c.pitch, c.roll, c.throttle, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 def Hover():
     c.forward = 0
