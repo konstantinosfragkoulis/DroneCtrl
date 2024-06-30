@@ -19,7 +19,7 @@ def main():
     thrust = pd.DataFrame({"RPM": RPMvalues, "Thrust": thrustValues, "RPM Back": RPMcalc})
     throttle = pd.DataFrame({"RPM": RPMvalues, "Throttle CRSF": throttleValues})
     crsf = pd.DataFrame({"CRSF": CRSFvalues, "Int": intValues, "CRSF Back": CRSFcalc})
-    deg_sec = pd.DataFrame({"Int": intValues, "Deg/Sec": DegPerSecValues, "Int Back": intCalc})
+    degPersec = pd.DataFrame({"Int": intValues, "Deg/Sec": DegPerSecValues, "Int Back": intCalc})
 
     plt.figure(figsize=(10, 8))
 
@@ -61,7 +61,7 @@ def main():
     print(thrust.describe())
     print(throttle.describe())
     print(crsf.describe())
-    print(deg_sec.describe())
+    print(degPersec.describe())
     plt.tight_layout()
     plt.show()
 
