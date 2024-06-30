@@ -1,0 +1,122 @@
+import signal
+from enum import IntEnum
+
+#################################################################
+##################  PHYSICS CONSTANTS - START  ##################
+#################################################################
+PI = 3.14159
+G = 9.81 # m/s^2
+RHO = 1.225 # kg/m^3
+DEG_TO_RAD = 180/PI
+#################################################################
+###################  PHYSICS CONSTANTS - END  ###################
+#################################################################
+
+
+
+
+
+#################################################################
+###############  USER EDITABLE VARIABLES - START  ###############
+#################################################################
+TAKEOFF_TIME = 0.6 # The time it takes for the drone to take off
+TAKEOFF_HEIGHT = 0.1 # The height the drone will take off to in meters
+MASS = 0.31 # The mass of the drone in kg
+LANDING_TIME = 3 # The drone will be descending for this time
+
+MAX_FORWARD_ACCELERATION = 2 # m/s^2
+MAX_SIDEWAYS_ACCELERATION = 2 # m/s^2
+MAX_VERTICAL_ACCELERATION = 2 # m/s^2
+MAX_ANGULAR_ACCELERATION = 90 # degrees/s^2
+
+VERTICAL_ACCELERATION_OFFSET = 0.5 # The drone hovers at this acceleration
+#################################################################
+################  USER EDITABLE VARIABLES - END  ################
+#################################################################
+
+TAKEOFF_TIME1 = 2 * TAKEOFF_TIME / 3
+TAKEOFF_TIME2 = TAKEOFF_TIME / 3
+MASS_N = MASS * G # The weight of the drone in Newtons
+LANDING_TIME1 = LANDING_TIME / 3
+
+
+PURPLE = ((130, 150, 150), (140, 255, 255))
+ORANGE = ((10, 150, 150), (20, 255, 255))
+RED = ((170, 125, 125), (10, 255, 255))
+GREEN = ((55, 150, 150), (65, 255, 255))
+BLUE = ((100, 110, 110), (115, 255, 255))
+
+signals_to_handle = [
+    signal.SIGINT,
+    signal.SIGTERM,
+    signal.SIGHUP,
+    signal.SIGUSR1,
+    signal.SIGUSR2,
+    signal.SIGQUIT,
+    signal.SIGABRT
+]
+
+class State(IntEnum):
+    Disarmed = 0
+    Grounded = 1
+    TakingOff = 2
+    Flying = 3
+    Landing = 4
+
+class FlyingState(IntEnum):
+    Hovering = 0
+    FollowingObject = 1
+    FlyingForward = 2
+    StabilizedHover = 3
+
+
+class Config:
+    state = State.Disarmed
+
+    flyingState = FlyingState.Hovering
+
+    running = True # The main loop of the program
+
+
+
+
+
+    #################################################################
+    ####################  SHARED MEMORY - START  ####################
+    #################################################################
+    memory = None
+    map_file = None
+    values = None
+    #################################################################
+    #####################  SHARED MEMORY - END  #####################
+    #################################################################
+    cap = None
+
+    forward = 0 # Move front or back
+    sideways = 0 # Move left or right
+    vertical = -10 # Move up or down
+    angle = 0 # Turn left or right
+
+    height = 0 # The calculated height of the drone
+
+    image = None # The current image from the camera
+
+    dt = 0 # The time difference between to Update calls
+
+
+
+
+
+    #################################################################
+    ############  TAKEOFF AND LANDING VARIABLES - START  ############
+    #################################################################
+    takeoffCnt = 0
+    takeoffAccel1: float = 0
+    takeoffAccel2: float = 0
+
+    landingCnt = 0
+    landingAccel1: float = 0
+    landingAccel2: float = 0
+    #################################################################
+    #############  TAKEOFF AND LANDING VARIABLES - END  #############
+    #################################################################
