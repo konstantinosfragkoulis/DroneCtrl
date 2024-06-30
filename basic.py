@@ -1,8 +1,11 @@
 import sys
+import os
+import csv
 import cv2 as cv
 import struct
 import logging
 from time import sleep
+from datetime import datetime
 from config import *
 from config import Config as c
 from tabulate import tabulate
@@ -80,3 +83,32 @@ def printDebugInfo():
     print("\033c", end="")
 
     print(tabulate(table_data, headers=headers, tablefmt="fancy_grid", numalign="left", stralign="right"))
+
+    headers = ["Timestamp", "State", "Yaw CRSF", "Yaw int16", "Yaw Angle", "Pitch CRSF", "Pitch int16", "Pitch Angle", "Roll CRSF", "Roll int16", "Roll Angle", "Throttle CRSF", "Throttle int16", "Acc X", "Acc Y", "Acc Z", "W Y", "Thrust"]
+    data = [
+        datetime.now().isoformat(),
+        c.state.name,
+        intToCRSF(c.yaw),
+        c.yaw,
+        round(intToDegPerSec(c.w_y), 4),
+        intToCRSF(c.pitch),
+        c.pitch,
+        round(c.Theta, 4),
+        intToCRSF(c.roll),
+        c.roll,
+        round(c.Phi, 4),
+        c.throttleCRSF,
+        c.throttle,
+        c.a_x,
+        c.a_y,
+        c.a_z,
+        c.w_y,
+        c.Thrust
+    ]
+
+    with open("log.csv", "a", newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        if not c.writtenHeaders:
+            writer.writerow(headers)
+            c.writtenHeaders = True
+        writer.writerow(data)
