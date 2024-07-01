@@ -1,5 +1,7 @@
 import sys
+import os
 import cv2 as cv
+import numpy as np
 
 import mmap
 import posix_ipc
@@ -38,15 +40,27 @@ def Start():
     
     logging.debug("\tInitializing shared memory...")
     c.memory = posix_ipc.SharedMemory("/myshm")
-    c.map_file = mmap.mmap(c.memory.fd, c.memory.size)
-    c.values = struct.unpack('i'*16, c.map_file.read(64))
+    c.mapFile = mmap.mmap(c.memory.fd, c.memory.size)
+    c.values = struct.unpack('i'*16, c.mapFile.read(64))
     
     logging.debug("\tShared memory initialized")
-    logging.debug("\tInitializing camera...")
-    
-    c.cap = cv.VideoCapture("/dev/video0")
-    
-    logging.debug("\tCamera initialized")
+    if c.virtualCam:
+        logging.debug("\tInitializing virtual camera...")
+        
+        size = 1024*1024*24
+
+        c.virtCamMemory = posix_ipc.SharedMemory("/myshm", posix_ipc.O_CREAT, size=size)
+        c.virtCamMapFile = mmap.mmap(c.virtCamMemory.fd, c.virtCamMemory.size)
+        #map_file.write(value.to_bytes(4, byteorder='little'))
+        c.virtCamFrame = np.zeros((1024, 1024, 24), dtype=np.uint8)
+
+        logging.debug("\tVirtual camera initialized")
+    else:
+        logging.debug("\tInitializing camera...")
+        
+        c.cap = cv.VideoCapture("/dev/video0")
+        
+        logging.debug("\tCamera initialized")
     logging.debug("\tDisarming drone...")
 
     Disarm()
@@ -55,7 +69,13 @@ def Start():
     logging.debug("\tDrone disarmed")
     logging.debug("\tGetting first frame...")
 
-    ret, _ = c.cap.read()
+    ret = False
+    if c.virtualCam:
+        c.virtCamFrame = getVirtualFrame()
+        if c.virtCamFrame is not None:
+            ret = True
+    else:
+        ret, _ = c.cap.read()
     if ret:
         logging.debug("\tFirst frame captured")
         logging.debug("\tArming drone...")
@@ -82,7 +102,13 @@ def UpdateHelp():
     cleanup()
 
 def Update():
-    ret, c.image = c.cap.read()
+    ret = False
+    if c.virtualCam:
+        c.virtCamFrame = getVirtualFrame()
+        if c.virtCamFrame is not None:
+            ret = True
+    else:
+        ret, c.image = c.cap.read()
     if not ret:
         print("Error: failed to capture image")
         c.running = False
@@ -225,7 +251,10 @@ def Update():
         if keyPressed == ord('q'):
             c.running = False
         
-        cv.imshow("frame", c.image)
+        if c.virtualCam:
+            cv.imshow("frame", c.virtCamFrame)
+        else:
+            cv.imshow("frame", c.image)
         printDebugInfo()
 
 
@@ -234,9 +263,12 @@ if __name__ == "__main__":
         description="A program that controls a drone and makes it autonomous."
     )
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+    parser.add_argument("--virt", help="use virtual camera", action="store_true")
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
+    if args.virt:
+        c.virtualCam = True
 
     logging.debug("\tVerbose mode")
     Awake()

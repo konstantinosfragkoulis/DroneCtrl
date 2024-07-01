@@ -3,6 +3,9 @@ from enum import Enum
 import cv2 as cv
 from nptyping import NDArray
 from typing import *
+from PIL import Image
+from config import *
+from config import Config as c
 
 """
 The code below is licensed under the MIT License.
@@ -383,3 +386,12 @@ def findContour(image, *colors):
         return largest_contour, largest_center
     else:
         return None, None
+
+def getVirtualFrame():
+    if c.virtualCam:
+        c.virtCamFrame = Image.frombytes('RGB', (1024, 1024), c.virtCamMemoryMapFile.read(1024 * 1024 * 3))
+        return
+    else:
+        c.virtCamFrame = None
+        return
+

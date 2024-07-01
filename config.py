@@ -78,7 +78,7 @@ class Config:
     running = True
 
     memory = None
-    map_file = None
+    mapFile = None
     values = None
     cap = None
 
@@ -125,3 +125,8 @@ class Config:
     roll = 0
 
     startTime = None
+
+    virtualCam = False
+    virtCamMemory = None
+    virtCamMapFile = None
+    virtCamFrame = None

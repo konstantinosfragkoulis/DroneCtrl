@@ -19,14 +19,20 @@ def cleanup():
     Disarm()
 
     logging.debug("\tDrone disarmed")
-    logging.debug("\tReleasing camera...")
-    c.cap.release()
-    cv.destroyAllWindows()
+    if c.virtualCam:
+        logging.debug("\tClosing virtual camera...")
+        c.virtCamMemory.close()
+        os.close(c.virtCamMapFile)
+        logging.debug("\tVirtual camera closed")
+    else:
+        logging.debug("\tReleasing camera...")
+        c.cap.release()
+        cv.destroyAllWindows()
+        logging.debug("\tCamera released")
 
-    logging.debug("\tCamera released")
     logging.debug("\tClosing shared memory...")
 
-    c.map_file.close()
+    c.mapFile.close()
     
     logging.debug("\tShared memory closed")
     print("Exiting...")
@@ -47,8 +53,8 @@ def passValues(*inputs):
         cleanup()
         return
     c.values = list(inputs) + [0] * (16 - len(inputs))
-    c.map_file.seek(0)  # Go back to the beginning of the mmap
-    c.map_file.write(struct.pack('i'*16, *c.values))
+    c.mapFile.seek(0)  # Go back to the beginning of the mmap
+    c.mapFile.write(struct.pack('i'*16, *c.values))
 
 def Arm():
     """Arms the drone by lowering the throttle to the minimum value
