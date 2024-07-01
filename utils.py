@@ -3,7 +3,8 @@ from enum import Enum
 import cv2 as cv
 from nptyping import NDArray
 from typing import *
-from PIL import Image
+import imageio
+import numpy as np
 from config import *
 from config import Config as c
 
@@ -389,9 +390,12 @@ def findContour(image, *colors):
 
 def getVirtualFrame():
     if c.virtualCam:
-        c.virtCamFrame = Image.frombytes('RGB', (1024, 1024), c.virtCamMemoryMapFile.read(1024 * 1024 * 3))
-        return
+        c.virtCamMapFile.seek(0)
+        data = c.virtCamMapFile.read(1024 * 1024 * 3)
+        img = np.frombuffer(data, dtype=np.uint8)
+        c.image = np.flipud(img.reshape((1024, 1024, 3)))
+        c.image = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        return c.image
     else:
-        c.virtCamFrame = None
+        c.image = None
         return
-

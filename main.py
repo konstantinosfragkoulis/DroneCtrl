@@ -47,12 +47,11 @@ def Start():
     if c.virtualCam:
         logging.debug("\tInitializing virtual camera...")
         
-        size = 1024*1024*24
+        size = 1024*1024*3
 
-        c.virtCamMemory = posix_ipc.SharedMemory("/myshm", posix_ipc.O_CREAT, size=size)
-        c.virtCamMapFile = mmap.mmap(c.virtCamMemory.fd, c.virtCamMemory.size)
-        #map_file.write(value.to_bytes(4, byteorder='little'))
-        c.virtCamFrame = np.zeros((1024, 1024, 24), dtype=np.uint8)
+        c.virtCamMemory = posix_ipc.SharedMemory("/myVirtCamMem", posix_ipc.O_CREAT, size=size)
+        c.virtCamMapFile = mmap.mmap(c.virtCamMemory.fd, size)
+        c.image = np.zeros((1024, 1024, 3), dtype=np.uint8)
 
         logging.debug("\tVirtual camera initialized")
     else:
@@ -71,8 +70,8 @@ def Start():
 
     ret = False
     if c.virtualCam:
-        c.virtCamFrame = getVirtualFrame()
-        if c.virtCamFrame is not None:
+        getVirtualFrame()
+        if c.image is not None:
             ret = True
     else:
         ret, _ = c.cap.read()
@@ -86,7 +85,7 @@ def Start():
         CalculateLanding()
         print("\nDrone initialized!\n\n\n")
     else:
-        print("Failed get first frame!\nThere is a problem with the camera", file=sys.stderr)
+        print("Failed to get first frame!\nThere is a problem with the camera")
         print("Cleaning up...")
         cleanup()
         return
@@ -104,8 +103,8 @@ def UpdateHelp():
 def Update():
     ret = False
     if c.virtualCam:
-        c.virtCamFrame = getVirtualFrame()
-        if c.virtCamFrame is not None:
+        getVirtualFrame()
+        if c.image is not None:
             ret = True
     else:
         ret, c.image = c.cap.read()
@@ -251,10 +250,7 @@ def Update():
         if keyPressed == ord('q'):
             c.running = False
         
-        if c.virtualCam:
-            cv.imshow("frame", c.virtCamFrame)
-        else:
-            cv.imshow("frame", c.image)
+        cv.imshow("frame", c.image)
         printDebugInfo()
 
 
@@ -270,6 +266,7 @@ if __name__ == "__main__":
     if args.virt:
         c.virtualCam = True
 
+    logging.getLogger('PIL').setLevel(logging.WARNING)
     logging.debug("\tVerbose mode")
     Awake()
     Start()
