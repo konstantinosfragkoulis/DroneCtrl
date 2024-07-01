@@ -124,4 +124,4 @@ class Config:
     yaw = 0
     roll = 0
 
-    writtenHeaders = False
+    startTime = None

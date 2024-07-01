@@ -84,20 +84,16 @@ def printDebugInfo():
 
     print(tabulate(table_data, headers=headers, tablefmt="fancy_grid", numalign="left", stralign="right"))
 
-    headers = ["Timestamp", "State", "Yaw CRSF", "Yaw int16", "Yaw Angle", "Pitch CRSF", "Pitch int16", "Pitch Angle", "Roll CRSF", "Roll int16", "Roll Angle", "Throttle CRSF", "Throttle int16", "Acc X", "Acc Y", "Acc Z", "W Y", "Thrust"]
+    headers = ["Timestamp", "State", "Flying State", "Yaw int16", "Pitch int16", "Pitch Angle", "Roll int16", "Roll Angle", "Throttle int16", "Acc X", "Acc Y", "Acc Z", "W Y", "Thrust"]
     data = [
         datetime.now().isoformat(),
         c.state.name,
-        intToCRSF(c.yaw),
+        c.flyingState.name,
         c.yaw,
-        round(intToDegPerSec(c.w_y), 4),
-        intToCRSF(c.pitch),
         c.pitch,
         round(c.Theta, 4),
-        intToCRSF(c.roll),
         c.roll,
         round(c.Phi, 4),
-        c.throttleCRSF,
         c.throttle,
         c.a_x,
         c.a_y,
@@ -106,9 +102,13 @@ def printDebugInfo():
         c.Thrust
     ]
 
-    with open("log.csv", "a", newline='') as csvfile:
+    writtenHeaders = True
+    if c.startTime is None:
+        c.startTime = datetime.now()
+        writtenHeaders = False
+    with open(f"log{c.startTime}.csv", "a", newline='') as csvfile:
         writer = csv.writer(csvfile)
-        if not c.writtenHeaders:
+        if not writtenHeaders:
             writer.writerow(headers)
-            c.writtenHeaders = True
+            writtenHeaders = True
         writer.writerow(data)
