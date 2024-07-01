@@ -126,7 +126,7 @@ def Stabilize():
     if center is None:
         return
     else:
-        dx = remap_range(center[1], 0, 640, -1, 1, True)
+        dx = remap_range(center[1], 0, 640, 1, -1, True)
         dy = remap_range(center[0], 0, 480, 1, -1, True)
 
         c.forward = 0
