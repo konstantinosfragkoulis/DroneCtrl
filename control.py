@@ -10,6 +10,11 @@ def control():
     """Convert the forward, angle, and vertical values to c.pitch,
     yaw, roll and throttle values and pass them to the drone."""
 
+    if c.state == State.Disarmed:
+        passValues(0, 0, 0, -32760, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        logging.debug("\tControl() called while disarmed")
+        return
+
     if c.forward > 1 or c.forward < -1:
         print(f"\tInvalid forward value {c.forward}. Must be between -1 and 1.")
         cleanup()

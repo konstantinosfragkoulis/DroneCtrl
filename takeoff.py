@@ -81,11 +81,13 @@ def Land(landingStage: int):
     if landingStage == 1:
         logging.debug(f"\tSetting acceleration to {c.landingAccel1} for landing stage 1...")
         c.forward = 0
+        c.sideways = 0
         c.vertical = c.landingAccel1
         c.angle = 0
     elif landingStage == 2:
         logging.debug(f"\tSetting acceleration to {c.landingAccel2} for landing stage 2...")
         c.forward = 0
+        c.sideways = 0
         c.vertical = c.landingAccel2
         c.angle = 0
     else:

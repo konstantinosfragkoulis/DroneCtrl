@@ -393,8 +393,7 @@ def getVirtualFrame():
         c.virtCamMapFile.seek(0)
         data = c.virtCamMapFile.read(1024 * 1024 * 3)
         img = np.frombuffer(data, dtype=np.uint8)
-        c.image = np.flipud(img.reshape((1024, 1024, 3)))
-        c.image = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        c.image = np.copy(np.flipud(img.reshape((1024, 1024, 3))))
         return c.image
     else:
         c.image = None

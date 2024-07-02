@@ -1,5 +1,4 @@
 import sys
-import os
 import csv
 import cv2 as cv
 import struct
@@ -13,9 +12,20 @@ from conversions import *
 
 def cleanup():
     c.running = False
+    c.forward = 0
+    c.sideways = 0
+    c.vertical = -10
+    c.angle = 0
+
+
     print("Program stopped running")
     logging.debug("\tDisarming...")
 
+    from control import control
+    control()
+    sleep(0.2)
+
+    c.state = State.Disarmed
     Disarm()
 
     logging.debug("\tDrone disarmed")
