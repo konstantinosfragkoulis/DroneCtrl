@@ -394,6 +394,7 @@ def getVirtualFrame():
         data = c.virtCamMapFile.read(1024 * 1024 * 3)
         img = np.frombuffer(data, dtype=np.uint8)
         c.image = np.copy(np.flipud(img.reshape((1024, 1024, 3))))
+        c.image[:, :, [0, 2]] = c.image[:, :, [2, 0]]
         return c.image
     else:
         c.image = None

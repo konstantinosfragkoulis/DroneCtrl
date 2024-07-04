@@ -54,13 +54,9 @@ def control():
         c.throttle = -32760
         c.throttleCRSF = intToCRSF(c.throttle)
     else:
-        _thrustConstXZ = math.sqrt((c.a_z+G)**2 + c.a_x**2)
-        c.ThrustXZ = MASS * _thrustConstXZ
-        c.Theta = math.asin(c.a_x/_thrustConstXZ) * DEG_TO_RAD
+        c.Theta = math.atan(c.a_x/(c.a_z+G)) * DEG_TO_RAD
 
-        _thrustConstYZ = math.sqrt((c.a_z+G)**2 + c.a_y**2)
-        c.ThrustYZ = MASS * _thrustConstYZ
-        c.Phi = math.asin(c.a_y/_thrustConstYZ) * DEG_TO_RAD
+        c.Phi = math.atan(c.a_y/(c.a_z+G)) * DEG_TO_RAD
 
         c.Thrust = MASS * math.sqrt(c.a_x**2 + c.a_y**2 + (c.a_z+G)**2)
 
