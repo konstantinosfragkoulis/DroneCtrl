@@ -58,7 +58,7 @@ def passValues(*inputs):
         cleanup()
         return
     c.values = list(inputs) + [0] * (16 - len(inputs))
-    c.mapFile.seek(0)  # Go back to the beginning of the mmap
+    c.mapFile.seek(0)
     c.mapFile.write(struct.pack('i'*16, *c.values))
 
 def Arm():
@@ -79,6 +79,12 @@ def ZeroThrottle():
     c.angle = 0
     c.vertical = -10
 
+def log(*strings):
+    """Print debug info."""
+    for string in strings:
+        c.debugInfo += string
+    c.debugInfo += "\n"
+
 def printDebugInfo():
     """Prints debug information when the -v flag is passed to the program."""
     headers = ["States", "", "CRSF", "int16", "Angle", "", "Accelerations"]
@@ -94,6 +100,8 @@ def printDebugInfo():
     print("\033c", end="")
 
     print(tabulate(table_data, headers=headers, tablefmt="fancy_grid", numalign="left", stralign="right"))
+
+    print(c.debugInfo)
 
     headers = ["Timestamp", "State", "Flying State", "Yaw int16", "Pitch int16", "Pitch Angle", "Roll int16", "Roll Angle", "Throttle int16", "Acc X", "Acc Y", "Acc Z", "W Y", "Thrust"]
     data = [
@@ -117,7 +125,7 @@ def printDebugInfo():
     if c.startTime is None:
         c.startTime = datetime.now()
         writtenHeaders = False
-    with open(f"log{c.startTime}.csv", "a", newline='') as csvfile:
+    with open(f"./logs/log{c.startTime}.csv", "a", newline='') as csvfile:
         writer = csv.writer(csvfile)
         if not writtenHeaders:
             writer.writerow(headers)

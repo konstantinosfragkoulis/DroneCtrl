@@ -1,5 +1,5 @@
 import logging
-from basic import cleanup, passValues
+from basic import cleanup, passValues, log
 from config import *
 from config import Config as c
 from conversions import *
@@ -12,7 +12,7 @@ def control():
 
     if c.state == State.Disarmed:
         passValues(0, 0, 0, -32760, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        logging.debug("\tControl() called while disarmed")
+        log("\tControl() called while disarmed")
         return
 
     if c.forward > 1 or c.forward < -1:
@@ -37,9 +37,7 @@ def control():
     c.a_z = (c.vertical+VERTICAL_ACCELERATION_OFFSET)*MAX_VERTICAL_ACCELERATION
     c.w_y = c.angle*MAX_ANGULAR_ACCELERATION
 
-    _thrustConstXZ = 0
     c.ThrustXZ = 0
-    _thrustConstYZ = 0
     c.ThrustYZ = 0
     c.Theta = 0
     c.Phi = 0
@@ -130,12 +128,12 @@ def Stabilize():
         dx = remap_range(center[1], 0, 640, 1, -1, True)
         dy = remap_range(center[0], 0, 480, 1, -1, True)
 
+
+        log(f"\nCenter: {center}")
+        log(f"dX: {dx} dY: {dy}")
+        log("\nDX: " + str(center[1]/640) + "DY: " + str(center[0]/480))
+
         c.forward = 0
         c.sideways = dx
         c.vertical = dy
         c.angle = 0
-
-        logging.debug("\n\n")
-        logging.debug(f"\tSideways: {c.sideways}")
-        logging.debug(f"\tVertical: {c.vertical}\n\n")
-        logging.debug("\n\n")

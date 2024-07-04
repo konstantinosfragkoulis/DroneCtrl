@@ -391,9 +391,9 @@ def findContour(image, *colors):
 def getVirtualFrame():
     if c.virtualCam:
         c.virtCamMapFile.seek(0)
-        data = c.virtCamMapFile.read(1024 * 1024 * 3)
+        data = c.virtCamMapFile.read(640 * 480 * 3)
         img = np.frombuffer(data, dtype=np.uint8)
-        c.image = np.copy(np.flipud(img.reshape((1024, 1024, 3))))
+        c.image = np.copy(np.flipud(img.reshape((480, 640, 3))))
         c.image[:, :, [0, 2]] = c.image[:, :, [2, 0]]
         return c.image
     else:

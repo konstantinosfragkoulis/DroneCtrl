@@ -129,3 +129,5 @@ class Config:
     virtualCam = False
     virtCamMemory = None
     virtCamMapFile = None
+
+    debugInfo = None

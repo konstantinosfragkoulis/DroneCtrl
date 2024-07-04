@@ -47,11 +47,11 @@ def Start():
     if c.virtualCam:
         logging.debug("\tInitializing virtual camera...")
         
-        size = 1024*1024*3
+        size = 640 * 480 * 3
 
         c.virtCamMemory = posix_ipc.SharedMemory("/myVirtCamMem", posix_ipc.O_CREAT, size=size)
         c.virtCamMapFile = mmap.mmap(c.virtCamMemory.fd, size)
-        c.image = np.zeros((1024, 1024, 3), dtype=np.uint8)
+        c.image = np.zeros((480, 640, 3), dtype=np.uint8)
 
         logging.debug("\tVirtual camera initialized")
     else:
@@ -93,6 +93,7 @@ def Start():
 def UpdateHelp():
     initialTime = time.perf_counter()
     while c.running:
+        c.debugInfo = ""
         Update()
 
         c.dt = time.perf_counter() - initialTime
@@ -109,7 +110,7 @@ def Update():
     else:
         ret, c.image = c.cap.read()
     if not ret:
-        print("Error: failed to capture image")
+        log("Error: failed to capture image")
         c.running = False
         return
     else:
@@ -124,13 +125,13 @@ def Update():
                     print(f"An error occurred while calling Arm() when Disarmed: {e}")
                     cleanup()
                 c.state = State.Grounded
-                print("Armed")
+                log("Armed")
                 
         elif c.state == State.Grounded:
             if keyPressed == ord('w'):
                 c.state = State.TakingOff
                 c.takeoffCnt = 0
-                print("Taking off...")
+                log("Taking off...")
             elif keyPressed == ord('r'):
                 try:
                     Disarm()
@@ -142,7 +143,7 @@ def Update():
                 # cleanup() will just call Disarm() again
                 # but for consistency, we will use try-except
                 c.state = State.Disarmed
-                print("Disarmed")
+                log("Disarmed")
             else:
                 try:
                     ZeroThrottle()
@@ -167,7 +168,7 @@ def Update():
                 c.state = State.Flying
                 c.flyingState = FlyingState.Hovering
                 c.takeoffCnt = 0
-                print("Flying...")
+                log("Flying...")
                 Hover()
 
             c.takeoffCnt += c.dt
@@ -176,23 +177,23 @@ def Update():
             if keyPressed == ord('s'):
                 c.state = State.Landing
                 c.landingCnt = 0
-                print("Landing...")
+                log("Landing...")
             elif keyPressed == ord('f'):
                 c.flyingState = FlyingState.FollowingObject
-                print("Following object")
+                log("Following object")
             elif keyPressed == ord('h'):
                 c.flyingState = FlyingState.Hovering
-                print("Hovering")
+                log("Hovering")
             elif keyPressed == ord('w'):
                 c.flyingState = FlyingState.FlyingForward
-                print("Flying forward")
+                log("Flying forward")
             elif keyPressed == ord('a'):
                 c.flyingState = FlyingState.StabilizedHover
-                print("Stabilized hover")
+                log("Stabilized hover")
             
 
             if c.flyingState == FlyingState.Hovering:
-                logging.debug("Hovering")
+                log("Hovering")
                 try:
                     Hover()
                 except Exception as e:
@@ -235,7 +236,7 @@ def Update():
                 ZeroThrottle()
                 c.state = State.Grounded
                 c.landingCnt = 0
-                print("Landed")
+                log("Landed")
             
             c.landingCnt += c.dt
 
