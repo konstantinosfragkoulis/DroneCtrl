@@ -189,6 +189,7 @@ def Update():
                 log("Flying forward")
             elif keyPressed == ord('a'):
                 c.flyingState = FlyingState.StabilizedHover
+                c.stabilizedHoverTime = 0
                 log("Stabilized hover")
             
 
@@ -215,6 +216,7 @@ def Update():
             elif c.flyingState == FlyingState.StabilizedHover:
                 try:
                     Stabilize()
+                    c.stabilizedHoverTime += c.dt
                 except Exception as e:
                     print(f"An error occurred: {e}")
                     cleanup()

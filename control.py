@@ -125,15 +125,23 @@ def Stabilize():
     if center is None:
         return
     else:
-        dx = remap_range(center[1], 0, 640, 1, -1, True)
-        dy = remap_range(center[0], 0, 480, 1, -1, True)
-
-
-        log(f"\nCenter: {center}")
-        log(f"dX: {dx} dY: {dy}")
-        log("\nDX: " + str(center[1]/640) + "DY: " + str(center[0]/480))
-
+        # Get the height of the reference point relative to the drone
+        h = -0.01511413*center[0] + 3.776693
+        d = 0 # Get the actual side distance of the reference point
         c.forward = 0
-        c.sideways = dx
-        c.vertical = dy
+        log(f"h: {h}")
+        if c.stabilizedHoverTime < 3*PI/2 and d != 0:
+            c.sideways = -math.sin(c.stabilizedHoverTime + 3*PI/2)*d/4
+        else:
+            c.sideways = 0
+        if c.stabilizedHoverTime < 3*PI/2 and h != 0:
+            c.vertical = -math.sin(c.stabilizedHoverTime + 3*PI/2)*h/4
+        else:
+            c.vertical = 0
+            log("Stabilized")
         c.angle = 0
+        
+        log(f"\nCenter: {center}")
+        # log(f"dX: {dx} dY: {dy}")
+        log(f"Vertical: {c.vertical}")
+        log("\nDX: ", str(center[1]/640), "DY: " + str(center[0]/480))

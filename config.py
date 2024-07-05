@@ -131,3 +131,5 @@ class Config:
     virtCamMapFile = None
 
     debugInfo = None
+
+    stabilizedHoverTime = 0

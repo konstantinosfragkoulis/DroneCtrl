@@ -81,6 +81,7 @@ def ZeroThrottle():
 
 def log(*strings):
     """Print debug info."""
+    strings = [str(element) for element in strings]
     for string in strings:
         c.debugInfo += string
     c.debugInfo += "\n"
