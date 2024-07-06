@@ -1,5 +1,6 @@
 import signal
 from enum import IntEnum
+from dataclasses import dataclass
 
 #################################################################
 ##################  PHYSICS CONSTANTS - START  ##################
@@ -38,6 +39,8 @@ TAKEOFF_TIME1 = 2 * TAKEOFF_TIME / 3
 TAKEOFF_TIME2 = TAKEOFF_TIME / 3
 WEIGHT = MASS * G
 LANDING_TIME1 = LANDING_TIME / 3
+
+STABILIZED_HOVER_STOP_TIME = 0.5
 
 
 PURPLE = ((130, 150, 150), (140, 255, 255))
@@ -133,3 +136,5 @@ class Config:
     debugInfo = None
 
     stabilizedHoverTime = 0
+    h = 0
+    d = 0

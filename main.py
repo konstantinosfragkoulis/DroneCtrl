@@ -115,6 +115,7 @@ def Update():
         return
     else:
         keyPressed = cv.waitKey(1)
+        log(str(c.dt))
 
 
         if c.state == State.Disarmed:
