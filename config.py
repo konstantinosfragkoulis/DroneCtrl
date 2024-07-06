@@ -31,17 +31,24 @@ MAX_VERTICAL_ACCELERATION = 2 # m/s^2
 MAX_ANGULAR_ACCELERATION = 90 # degrees/s^2
 
 VERTICAL_ACCELERATION_OFFSET = 0.5 # The drone hovers at this acceleration
+
+STABILIZED_HOVER_STEP_ACCELERATION = 0.1 # m/s^2
+STABILIZED_HOVER_STEP_DURATION = 2 # s
 #################################################################
 ################  USER EDITABLE VARIABLES - END  ################
 #################################################################
 
+STABILIZED_HOVER_STEP_DURATIOND2 = STABILIZED_HOVER_STEP_DURATION / 2
+STABILIZED_HOVER_STEP_ACCELERATIOND2 = STABILIZED_HOVER_STEP_ACCELERATION / 2
 TAKEOFF_TIME1 = 2 * TAKEOFF_TIME / 3
 TAKEOFF_TIME2 = TAKEOFF_TIME / 3
 WEIGHT = MASS * G
 LANDING_TIME1 = LANDING_TIME / 3
 
-STABILIZED_HOVER_STOP_TIME = 0.5
-
+CAM_WIDTH = 640
+CAM_HEIGHT = 480
+CAM_WIDTHD2 = CAM_WIDTH / 2
+CAM_HEIGHTD2 = CAM_HEIGHT / 2
 
 PURPLE = ((130, 150, 150), (140, 255, 255))
 ORANGE = ((10, 150, 150), (20, 255, 255))
@@ -71,6 +78,21 @@ class FlyingState(IntEnum):
     FollowingObject = 1
     FlyingForward = 2
     StabilizedHover = 3
+
+@dataclass
+class StablizedHoverData:
+    centerY: int
+    centerX: int
+    dCenterY: int
+    dCenterX: int
+    adjustedHoverData:bool
+    stabilizationDurationX: float
+    stabilizationDurationXD2: float
+    stabilizationDurationY: float
+    stabilizationDurationYD2: float
+    stabilizationDuration: float
+    left: bool
+    up: bool
 
 
 class Config:
@@ -136,5 +158,4 @@ class Config:
     debugInfo = None
 
     stabilizedHoverTime = 0
-    h = 0
-    d = 0
+    stablizedHoverData = StablizedHoverData(0, 0, 0, 0, 0, 0, False, 999, 999, 999, True, True)

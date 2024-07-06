@@ -126,25 +126,116 @@ def Stabilize():
         return
     else:
         if c.stabilizedHoverTime == 0:
-            # Get the height of the reference point relative to the drone
-            c.h = -0.01413308*center[0] + 3.178994
-            c.d = 0 # Get the actual side distance of the reference point
+            c.stablizedHoverData.centerY = center[0]
+            c.stablizedHoverData.centerX = center[1]
         
+        # For the first second, the drone will move a bit left/right and
+        # up/down based on the center of the reference object.
+
+        # Then, we will use the change of the center of the reference object
+        # to determine how much the drone should move left/right and up/down.
+
+        # So basically, the drone will move in steps. Since we only know
+        # the position of the drone relative to the reference object, we
+        # will first calculate how big one step is, and then perform all
+        # the steps at once to reach the desired position.
+        
+        # Move just one step
         c.forward = 0
-        log(f"h: {c.h}")
-        if c.stabilizedHoverTime < PI and c.d != 0:
-            c.sideways = -math.sin(c.stabilizedHoverTime + 3*PI/2)*c.d/4
+
+        if c.stabilizedHoverTime < STABILIZED_HOVER_STEP_DURATIOND2:
+            if c.stablizedHoverData.centerX > CAM_WIDTHD2:
+                c.sideways = -STABILIZED_HOVER_STEP_ACCELERATIOND2
+            elif c.stablizedHoverData.centerX < CAM_WIDTHD2:
+                c.sideways = STABILIZED_HOVER_STEP_ACCELERATIOND2
+            else:
+                c.sideways = 0
+            
+            if c.stablizedHoverData.centerY > CAM_HEIGHTD2:
+                c.vertical = -STABILIZED_HOVER_STEP_ACCELERATIOND2
+            elif c.stablizedHoverData.centerY < CAM_HEIGHTD2:
+                c.vertical = STABILIZED_HOVER_STEP_ACCELERATIOND2
+            else:
+                c.vertical = 0
+            
+            log("Sideways: ", c.sideways, " Vertical: ", c.vertical)
+        elif c.stabilizedHoverTime < STABILIZED_HOVER_STEP_DURATION:
+           
+            if c.stablizedHoverData.centerX > CAM_WIDTHD2:
+                c.sideways = STABILIZED_HOVER_STEP_ACCELERATIOND2
+            elif c.stablizedHoverData.centerX < CAM_WIDTHD2:
+                c.sideways = -STABILIZED_HOVER_STEP_ACCELERATIOND2
+            else:
+                c.sideways = 0
+            
+            if c.stablizedHoverData.centerY > CAM_HEIGHTD2:
+                c.vertical = STABILIZED_HOVER_STEP_ACCELERATIOND2
+            elif c.stablizedHoverData.centerY < CAM_HEIGHTD2:
+                c.vertical = -STABILIZED_HOVER_STEP_ACCELERATIOND2
+            else:
+                c.vertical = 0
+        elif not c.stablizedHoverData.adjustedHoverData:
+            c.stablizedHoverData.dCenterY = abs(c.stablizedHoverData.centerY - center[0])
+            c.stablizedHoverData.dCenterX = abs(c.stablizedHoverData.centerX - center[1])
+            c.stablizedHoverData.adjustedHoverData = True
+
+            # In STABILIZED_HOVER_STEP_DURATION seconds moved dCenterX and dCenterY
+            # So, to move abs(center[0] - WIDTHD2) with STABILIZED_HOVER_STEP_ACCELERATIOND2 we need c.stabilizationDuration seconds
+            c.stablizedHoverData.stabilizationDurationY = abs(CAM_HEIGHTD2 - center[0])*STABILIZED_HOVER_STEP_DURATION/c.stablizedHoverData.dCenterY
+            c.stablizedHoverData.stabilizationDurationX = abs(CAM_WIDTHD2 - center[1])*STABILIZED_HOVER_STEP_DURATION/c.stablizedHoverData.dCenterX
+
+            c.stablizedHoverData.stabilizationDurationYD2 = c.stablizedHoverData.stabilizationDurationY/2
+            c.stablizedHoverData.stabilizationDurationXD2 = c.stablizedHoverData.stabilizationDurationX/2
+
+            c.stablizedHoverData.left = c.stablizedHoverData.centerX < CAM_WIDTHD2
+            if c.stablizedHoverData.centerX == CAM_WIDTHD2:
+                c.stablizedHoverData.left = None
+            
+            c.stablizedHoverData.up = c.stablizedHoverData.centerY < CAM_HEIGHTD2
+            if c.stablizedHoverData.centerY == CAM_HEIGHTD2:
+                c.stablizedHoverData.up = None
+
+            c.stablizedHoverData.stabilizationDuration = max(c.stablizedHoverData.stabilizationDurationX, c.stablizedHoverData.stabilizationDurationY)
+
+        elif c.stabilizedHoverTime < c.stablizedHoverData.stabilizationDuration:
+
+            if c.stabilizedHoverTime < c.stablizedHoverData.stabilizationDurationYD2:
+                if c.stablizedHoverData.up is None:
+                    c.vertical = 0
+                elif c.stablizedHoverData.up:
+                    c.vertical = STABILIZED_HOVER_STEP_ACCELERATIOND2
+                elif not c.stablizedHoverData.up:
+                    c.vertical = -STABILIZED_HOVER_STEP_ACCELERATIOND2
+            elif c.stabilizedHoverTime < c.stablizedHoverData.stabilizationDurationY:
+                if c.stablizedHoverData.up is None:
+                    c.vertical = 0
+                elif c.stablizedHoverData.up:
+                    c.vertical = -STABILIZED_HOVER_STEP_ACCELERATIOND2
+                elif not c.stablizedHoverData.up:
+                    c.vertical = STABILIZED_HOVER_STEP_ACCELERATIOND2
+
+            if c.stabilizedHoverTime < c.stablizedHoverData.stabilizationDurationXD2:
+                if c.stablizedHoverData.left is None:
+                    c.sideways = 0
+                elif c.stablizedHoverData.left:
+                    c.sideways = STABILIZED_HOVER_STEP_ACCELERATIOND2
+                elif not c.stablizedHoverData.left:
+                    c.sideways = -STABILIZED_HOVER_STEP_ACCELERATIOND2
+            elif c.stabilizedHoverTime < c.stablizedHoverData.stabilizationDurationX:
+                if c.stablizedHoverData.left is None:
+                    c.sideways = 0
+                elif c.stablizedHoverData.left:
+                    c.sideways = -STABILIZED_HOVER_STEP_ACCELERATIOND2
+                elif not c.stablizedHoverData.left:
+                    c.sideways = STABILIZED_HOVER_STEP_ACCELERATIOND2
         else:
-            c.sideways = 0
-        
-        if c.stabilizedHoverTime < PI and c.h != 0:
-            c.vertical = -math.sin(c.stabilizedHoverTime + 3*PI/2)*c.h/4
-        else:
+            log("Drone Stabilized")
             c.stabilizedHoverTime = 0
-            c.vertical = 0
-            log("Stabilized")
+            c.stablizedHoverData = StablizedHoverData(0, 0, 0, 0, 0, 0, False, 999, 999, 999, True, True)
+
         c.angle = 0
         
         log(f"\nCenter: {center}")
         log(f"Vertical: {c.vertical}")
         log("DX: ", str(center[1]), " DY: " + str(center[0]))
+        log(f"Sideways: {c.sideways}, Vertical: {c.vertical}")
