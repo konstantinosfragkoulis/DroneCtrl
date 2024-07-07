@@ -90,9 +90,9 @@ def followHoops():
     if center is None:
         return
     else:
-        dx = remap_range(center[1], 0, 640, -32768, 32767) # Center is (y, x)
-        dy = remap_range(center[0], 0, 480, 32767, -32768) # dy is positive when the hoop is above the center
-        print("dx: ", dx, "dy: ", dy)
+        c.hd.dx = remap_range(center[1], 0, 640, -32768, 32767) # Center is (y, x)
+        c.hd.dy = remap_range(center[0], 0, 480, 32767, -32768) # c.hd.dy is positive when the hoop is above the center
+        print("c.hd.dx: ", c.hd.dx, "c.hd.dy: ", c.hd.dy)
 
     # Display the c.image
     cv.imshow("frame", c.image)
@@ -104,11 +104,11 @@ def followTarget(*colors):
     if center is None:
         return
     else:
-        dx = remap_range(center[1], 0, 640, -1, 1, True)
-        dy = remap_range(center[0], 0, 480, 1, -1, True)
+        c.hd.dx = remap_range(center[1], 0, 640, -1, 1, True)
+        c.hd.dy = remap_range(center[0], 0, 480, 1, -1, True)
 
-        c.angle = dx
-        c.vertical = dy
+        c.angle = c.hd.dx
+        c.vertical = c.hd.dy
         c.forward = 0.25
 
         logging.debug("\n\n")
@@ -170,25 +170,29 @@ def Stabilize():
             c.hd.dCenterX = abs(CAM_WIDTHD2 - center[1])
             c.hd.adjustedHoverData = True
 
-            dy = c.hd.accelY * (STABILIZED_HOVER_STEP_DURATIOND2**2)
-            dx = c.hd.accelX * (STABILIZED_HOVER_STEP_DURATIOND2**2)
+            c.hd.dy = (c.hd.accelY*MAX_VERTICAL_ACCELERATION) * (STABILIZED_HOVER_STEP_DURATIOND2**2)
+            c.hd.dx = (c.hd.accelX*MAX_SIDEWAYS_ACCELERATION) * (STABILIZED_HOVER_STEP_DURATIOND2**2)
 
-            dyPx = abs(c.hd.centerY - center[0])
-            dxPx = abs(c.hd.centerX - center[1])
+            print(f"accelY: {c.hd.accelY}, accelX: {c.hd.accelX}")
+            print(f"Actual accelY: {c.hd.accelY*MAX_VERTICAL_ACCELERATION}, Actual accelX: {c.hd.accelX*MAX_SIDEWAYS_ACCELERATION}")
+            print(f"duration: {STABILIZED_HOVER_STEP_DURATION}")
+            print("dx: ", c.hd.dx, " dy: ", c.hd.dy)
 
-            print("dyPx: ", dyPx, " dxPx: ", dxPx)
-            print("dy: ", dy, " dx: ", dx)
+            c.hd.dyPx = abs(c.hd.centerY - center[0])
+            c.hd.dxPx = abs(c.hd.centerX - center[1])
+
+            print("dyPx: ", c.hd.dyPx, " dxPx: ", c.hd.dxPx)
             print("dCenterY: ", c.hd.dCenterY, " dCenterX: ", c.hd.dCenterX)
 
-            if dy == 0 or dyPx == 0:
+            if c.hd.dy == 0 or c.hd.dyPx == 0:
                 c.hd.h = 0
             else:
-                c.hd.h = (c.hd.dCenterY * dy) / dyPx
+                c.hd.h = ((c.hd.dCenterY * c.hd.dy) / c.hd.dyPx) * (-1 if c.hd.accelY < 0 else 1)
             
-            if dx == 0 or dxPx == 0:
+            if c.hd.dx == 0 or c.hd.dxPx == 0:
                 c.hd.d = 0
             else:
-                c.hd.d = (c.hd.dCenterX * dx) / dxPx
+                c.hd.d = ((c.hd.dCenterX * c.hd.dx) / c.hd.dxPx) * (-1 if c.hd.accelX < 0 else 1)
 
             c.hd.stabilizationDuration = PI + STABILIZED_HOVER_STEP_DURATION
 
@@ -198,9 +202,7 @@ def Stabilize():
             log(c.hd.adjustedHoverData)
 
             c.sideways = math.sin(c.stabilizedHoverTime-STABILIZED_HOVER_STEP_DURATION + 3*PI/2) * c.hd.d/(2*MAX_SIDEWAYS_ACCELERATION)
-            c.vertical = math.sin(c.stabilizedHoverTime-STABILIZED_HOVER_STEP_DURATION + 3*PI/2) * c.hd.h/(2*MAX_VERTICAL_ACCELERATION)
-            # c.hd.d/2 because the format is A*sin(Bx + C) where A is the amplitude
-            # and the amplitude is half of the distance the drone should.
+            c.vertical = -math.sin(c.stabilizedHoverTime-STABILIZED_HOVER_STEP_DURATION + 3*PI/2) * c.hd.h/(2*MAX_VERTICAL_ACCELERATION)
 
         else:
             log("Drone Stabilized")
@@ -211,5 +213,7 @@ def Stabilize():
         
         log(f"\nCenter: {center}")
         log(f"Vertical: {c.vertical}")
-        log("DX: ", str(center[1]), " DY: " + str(center[0]))
         log(f"Sideways: {c.sideways}, Vertical: {c.vertical}")
+        log(f"h: {c.hd.h}, d: {c.hd.d}")
+        log(f"dx: {c.hd.dx}, dy: {c.hd.dy} dxPx: {c.hd.dxPx}, dyPx: {c.hd.dyPx}")
+        log(f"AccelX: {c.hd.accelX}, AccelY: {c.hd.accelY}")
