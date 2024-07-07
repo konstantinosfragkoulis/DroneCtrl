@@ -32,8 +32,8 @@ MAX_ANGULAR_ACCELERATION = 90 # degrees/s^2
 
 VERTICAL_ACCELERATION_OFFSET = 0.5 # The drone hovers at this acceleration
 
-STABILIZED_HOVER_STEP_ACCELERATION = 0.1 # m/s^2
-STABILIZED_HOVER_STEP_DURATION = 2 # s
+STABILIZED_HOVER_STEP_ACCELERATION = 0.5 # m/s^2
+STABILIZED_HOVER_STEP_DURATION = 0.5 # s
 #################################################################
 ################  USER EDITABLE VARIABLES - END  ################
 #################################################################
@@ -86,13 +86,11 @@ class StablizedHoverData:
     dCenterY: int
     dCenterX: int
     adjustedHoverData:bool
-    stabilizationDurationX: float
-    stabilizationDurationXD2: float
-    stabilizationDurationY: float
-    stabilizationDurationYD2: float
+    d: float
+    h: float
+    accelY: float
+    accelX: float
     stabilizationDuration: float
-    left: bool
-    up: bool
 
 
 class Config:
@@ -158,4 +156,4 @@ class Config:
     debugInfo = None
 
     stabilizedHoverTime = 0
-    stablizedHoverData = StablizedHoverData(0, 0, 0, 0, 0, 0, False, 999, 999, 999, True, True)
+    hd = StablizedHoverData(0, 0, 0, 0, False, 0, 0, 0, 0, 0)
