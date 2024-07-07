@@ -115,7 +115,7 @@ def followTarget(*colors):
         logging.debug(f"\tAngle: {c.angle}")
         logging.debug(f"\tVertical: {c.vertical}\n\n")
 
-def _getAccel(center, mid, accel):
+def _getAccel2(center, mid, accel):
     if center == mid:
         return 0
     elif center > mid:
@@ -123,7 +123,15 @@ def _getAccel(center, mid, accel):
     else:
         return accel
 
-def Stabilize():
+def _getAccel(center, mid, accel):
+    if abs(center - mid) < STABILIZED_HOVER_DEADZONE:
+        return 0
+    elif center > mid:
+        return -accel
+    else:
+        return accel
+
+def Stabilize2():
     c.forward = 0
     c.sideways = 0
     c.vertical = 0
@@ -137,8 +145,8 @@ def Stabilize():
             c.hd.centerY = center[0]
             c.hd.centerX = center[1]
 
-            c.hd.accelY = _getAccel(c.hd.centerY, CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATIOND2)
-            c.hd.accelX = _getAccel(c.hd.centerX, CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATIOND2)
+            c.hd.accelY = _getAccel2(c.hd.centerY, CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
+            c.hd.accelX = _getAccel2(c.hd.centerX, CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATION_YD2)
         
         # For the first second, the drone will move a bit left/right and
         # up/down based on the center of the reference object.
@@ -217,3 +225,36 @@ def Stabilize():
         log(f"h: {c.hd.h}, d: {c.hd.d}")
         log(f"dx: {c.hd.dx}, dy: {c.hd.dy} dxPx: {c.hd.dxPx}, dyPx: {c.hd.dyPx}")
         log(f"AccelX: {c.hd.accelX}, AccelY: {c.hd.accelY}")
+
+def Stabilize():
+    c.forward = 0
+    c.sideways = 0
+    c.vertical = 0
+    c.angle = 0
+
+    contour, center = findContour(c.image, BLUE)
+    if center is None:
+        return
+    else:
+        if c.stabilizedHoverTime == 0:
+            c.hd.centerY = center[0]
+            c.hd.centerX = center[1]
+
+            c.hd.accelY = _getAccel(c.hd.centerY, CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
+            c.hd.accelX = _getAccel(c.hd.centerX, CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATION_YD2)
+        elif c.stabilizedHoverTime < STABILIZED_HOVER_STEP_DURATIOND2:
+            c.sideways = c.hd.accelX
+            c.vertical = c.hd.accelY
+        elif c.stabilizedHoverTime < STABILIZED_HOVER_STEP_DURATION:
+            c.sideways = -c.hd.accelX
+            c.vertical = -c.hd.accelY
+        else:
+            c.stabilizedHoverTime = 0.0001
+            c.hd.accelY = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
+            c.hd.accelX = _getAccel(center[1], CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATION_YD2)
+            log(f"New accelX: {c.hd.accelX}, New accelY: {c.hd.accelY}")
+        
+        log(f"accelX: {c.hd.accelX}, accelY: {c.hd.accelY}")
+        log(f"Sideways: {c.sideways}, Vertical: {c.vertical}")
+        log(f"Center: {center}")
+        log(f"hoverTime: {c.stabilizedHoverTime}")
