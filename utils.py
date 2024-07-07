@@ -3,10 +3,10 @@ from enum import Enum
 import cv2 as cv
 from nptyping import NDArray
 from typing import *
-import imageio
 import numpy as np
 from config import *
 from config import Config as c
+from basic import safeCall
 
 """
 The code below is licensed under the MIT License.
@@ -40,6 +40,7 @@ class ColorBGR(Enum):
     white = (255, 255, 255)
     brown = (0, 63, 127)
 
+@safeCall
 def clamp(value: float, min: float, max: float) -> float:
     """
     Clamps a value between a minimum and maximum value.
@@ -65,6 +66,7 @@ def clamp(value: float, min: float, max: float) -> float:
     """
     return min if value < min else max if value > max else value
 
+@safeCall
 def remap_range(
     val: float,
     old_min: float,
@@ -115,6 +117,7 @@ def remap_range(
 
     return new_val
 
+@safeCall
 def find_contours(
     color_image: Any,
     hsv_lower: Tuple[int, int, int],
@@ -188,6 +191,7 @@ def find_contours(
     # Find and return a list of all contours of this mask
     return cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)[0]
 
+@safeCall
 def get_largest_contour(
     contours: List[NDArray], min_area: int = 30
 ) -> Optional[NDArray]:
@@ -225,6 +229,7 @@ def get_largest_contour(
 
     return greatest_contour
 
+@safeCall
 def draw_contour(
     color_image: Any,
     contour: NDArray,
@@ -260,6 +265,7 @@ def draw_contour(
 
     cv.drawContours(color_image, [contour], 0, color, 3)
 
+@safeCall
 def draw_circle(
     color_image: Any,
     center: Tuple[int, int],
@@ -307,6 +313,7 @@ def draw_circle(
     # cv.circle expects the center in (column, row) format
     cv.circle(color_image, (center[1], center[0]), radius, color, -1)
 
+@safeCall
 def get_contour_center(contour: NDArray) -> Optional[Tuple[int, int]]:
     """
     Finds the center of a contour from an image.
@@ -344,6 +351,7 @@ def get_contour_center(contour: NDArray) -> Optional[Tuple[int, int]]:
     center_column = round(M["m10"] / M["m00"])
     return (center_row, center_column)
 
+@safeCall
 def get_contour_area(contour: NDArray) -> float:
     """
     Finds the area of a contour from an image.
@@ -372,6 +380,7 @@ def get_contour_area(contour: NDArray) -> float:
 The code above is licensed under the MIT License.
 """
 
+@safeCall
 def findContour(image, *colors):
     contours = []
     for color in colors:
@@ -388,6 +397,7 @@ def findContour(image, *colors):
     else:
         return None, None
 
+@safeCall
 def getVirtualFrame():
     if c.virtualCam:
         c.virtCamMapFile.seek(0)

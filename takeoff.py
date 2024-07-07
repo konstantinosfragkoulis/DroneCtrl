@@ -2,9 +2,11 @@ from config import *
 from config import Config as c
 from utils import clamp
 from conversions import *
+from basic import safeCall
 import logging
 
 
+@safeCall
 def CalculateTakeoff(h: float, t: float):
     """Calculates the thrust needed for the drone to take off to a given
     height `h` in a given time `t`.""" 
@@ -49,6 +51,7 @@ def CalculateTakeoff(h: float, t: float):
 
     logging.debug("\n")
 
+@safeCall
 def Takeoff(takeoffStage: int):
     if takeoffStage == 1:
         logging.debug(f"\tSetting acceleration to {c.takeoffAccel1} for takeoff stage 1...")
@@ -64,6 +67,7 @@ def Takeoff(takeoffStage: int):
         logging.debug(f"\tInvalid takeoff stage {takeoffStage}. Must be 1 or 2")
 
 # TODO: Actually calculate landing thrust
+@safeCall
 def CalculateLanding():
     """Calculates the thrust needed for the drone to land relatively slowly.""" 
 
@@ -77,6 +81,7 @@ def CalculateLanding():
     logging.debug(f"Landing Acceleration 2: {c.landingAccel2}")
     logging.debug("\n")
 
+@safeCall
 def Land(landingStage: int):
     if landingStage == 1:
         logging.debug(f"\tSetting acceleration to {c.landingAccel1} for landing stage 1...")

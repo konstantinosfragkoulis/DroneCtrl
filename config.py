@@ -83,7 +83,7 @@ class FlyingState(IntEnum):
     StabilizedHover = 3
 
 @dataclass
-class StablizedHoverData:
+class StablizedHoverData2:
     centerY: int
     centerX: int
     dCenterY: int
@@ -98,6 +98,11 @@ class StablizedHoverData:
     dxPx: int
     dy: float
     dx: float
+
+@dataclass
+class StablizedHoverData:
+    accelY: float
+    accelX: float
 
 
 class Config:
@@ -163,4 +168,5 @@ class Config:
     debugInfo = None
 
     stabilizedHoverTime = 0
-    hd = StablizedHoverData(0, 0, 0, 0, False, 0, 0, 0, 0, 0, 0,0,0,0)
+    hd2 = StablizedHoverData2(0, 0, 0, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    hd = StablizedHoverData(0, 0)

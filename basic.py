@@ -8,7 +8,15 @@ from datetime import datetime
 from config import *
 from config import Config as c
 from tabulate import tabulate
-from conversions import *
+
+def safeCall(func):
+    def wrappedFunc(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            print(f"An error occurred while calling {func.__name__}(): {e}")
+            cleanup()
+    return wrappedFunc
 
 def cleanup():
     c.running = False
@@ -43,6 +51,7 @@ def cleanup():
     print("Exiting...")
     sys.exit(0)
 
+@safeCall
 def handle_signal(signum, frame):
     """Handles many signals that stop program execution by cleaning
     up and exiting the program.\nVERY IMPORTANT! Under no circumstances
@@ -51,6 +60,7 @@ def handle_signal(signum, frame):
     print(f"\nDetected signal {signum}!\nCleaning up...")
     cleanup()
 
+@safeCall
 def passValues(*inputs):
     """Passes the given values to the shared memory, effectively transmitting them to the drone."""
     if len(inputs) != 16:
@@ -61,6 +71,7 @@ def passValues(*inputs):
     c.mapFile.seek(0)
     c.mapFile.write(struct.pack('i'*16, *c.values))
 
+@safeCall
 def Arm():
     """Arms the drone by lowering the throttle to the minimum value
     and setting AUX1 to high."""
@@ -68,17 +79,20 @@ def Arm():
     sleep(0.5)
     passValues(0, 0, 0, -32768, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+@safeCall
 def Disarm():
     """Disarms the drone by lowering the throttle to the minimum value
     and setting AUX1 to low."""
     passValues(0, 0, 0, -32768, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+@safeCall
 def ZeroThrottle():
     """Sets the throttle to the minimum value, with the drone still armed."""
     c.forward = 0
     c.angle = 0
     c.vertical = -10
 
+@safeCall
 def log(*strings):
     """Print debug info."""
     strings = [str(element) for element in strings]
@@ -86,8 +100,10 @@ def log(*strings):
         c.debugInfo += string
     c.debugInfo += "\n"
 
+@safeCall
 def printDebugInfo():
     """Prints debug information when the -v flag is passed to the program."""
+    from conversions import intToCRSF, intToDegPerSec
     headers = ["States", "", "CRSF", "int16", "Angle", "", "Accelerations"]
     data = [
         {"State": c.state.name,       "1": "Yaw",      "CRSF": intToCRSF(c.yaw),   "int16": c.yaw,      "Angle": round(intToDegPerSec(c.w_y), 4), "2": "x:", "Accelerations": c.a_x},

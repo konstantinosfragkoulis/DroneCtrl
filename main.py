@@ -1,5 +1,3 @@
-import sys
-import os
 import cv2 as cv
 import numpy as np
 
@@ -120,11 +118,7 @@ def Update():
 
         if c.state == State.Disarmed:
             if keyPressed == ord('r'):
-                try:
-                    Arm()
-                except Exception as e:
-                    print(f"An error occurred while calling Arm() when Disarmed: {e}")
-                    cleanup()
+                Arm()
                 c.state = State.Grounded
                 log("Armed")
                 
@@ -134,37 +128,17 @@ def Update():
                 c.takeoffCnt = 0
                 log("Taking off...")
             elif keyPressed == ord('r'):
-                try:
-                    Disarm()
-                except Exception as e:
-                    print(f"An error occurred while calling Disarm() with the drone Grounded: {e}")
-                    cleanup()
-                # No point in using try-except here
-                # if Disarm() fails, there is a serious problem
-                # cleanup() will just call Disarm() again
-                # but for consistency, we will use try-except
+                Disarm()
                 c.state = State.Disarmed
                 log("Disarmed")
             else:
-                try:
-                    ZeroThrottle()
-                except Exception as e:
-                    print(f"An error occurred while calling ZeroThrottle() with the drone Grounded: {e}")
-                    cleanup()
+                ZeroThrottle()
 
         elif c.state == State.TakingOff:
             if c.takeoffCnt < TAKEOFF_TIME1:
-                try:
-                    Takeoff(1)
-                except Exception as e:
-                    print(f"An error occurred while calling Takeoff(1): {e}")
-                    cleanup()
+                Takeoff(1)
             elif c.takeoffCnt < TAKEOFF_TIME:
-                try:
-                    Takeoff(2)
-                except Exception as e:
-                    print(f"An error occurred while calling Takeoff(2): {e}")
-                    cleanup()
+                Takeoff(2)
             else:
                 c.state = State.Flying
                 c.flyingState = FlyingState.Hovering
@@ -196,45 +170,20 @@ def Update():
 
             if c.flyingState == FlyingState.Hovering:
                 log("Hovering")
-                try:
-                    Hover()
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                    cleanup()
+                Hover()
             elif c.flyingState == FlyingState.FollowingObject:
-                try:
-                    followTarget(BLUE)
-                    pass
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                    cleanup()
+                followTarget(BLUE)
             elif c.flyingState == FlyingState.FlyingForward:
-                try:
-                    flyForward()
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                    cleanup()
+                flyForward()
             elif c.flyingState == FlyingState.StabilizedHover:
-                try:
-                    Stabilize()
-                    c.stabilizedHoverTime += c.dt
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                    cleanup()
+                Stabilize()
+                c.stabilizedHoverTime += c.dt
 
         elif c.state == State.Landing:
             if c.landingCnt < LANDING_TIME1:
-                try:
-                    Land(1)
-                except Exception as e:
-                    print(f"An error occurred while calling Land(1): {e}")
-                    cleanup()
+                Land(1)
             elif c.landingCnt < LANDING_TIME:
-                try:
-                    Land(2)
-                except Exception as e:
-                    print(f"An error occurred while calling Land(2): {e}")
-                    cleanup()
+                Land(2)
             else:
                 ZeroThrottle()
                 c.state = State.Grounded
@@ -244,11 +193,7 @@ def Update():
             c.landingCnt += c.dt
 
 
-        try:
-            control()
-        except Exception as e:
-            print(f"An error occurred while calling control(): {e}")
-            cleanup()
+        control()
 
 
         if keyPressed == ord('q'):
