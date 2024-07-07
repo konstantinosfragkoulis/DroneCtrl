@@ -42,7 +42,7 @@ def Start():
     c.values = struct.unpack('i'*16, c.mapFile.read(64))
     
     logging.debug("\tShared memory initialized")
-    if c.virtualCam:
+    if c.virtual:
         logging.debug("\tInitializing virtual camera...")
         
         size = 640 * 480 * 3
@@ -66,13 +66,7 @@ def Start():
     logging.debug("\tDrone disarmed")
     logging.debug("\tGetting first frame...")
 
-    ret = False
-    if c.virtualCam:
-        getVirtualFrame()
-        if c.image is not None:
-            ret = True
-    else:
-        ret, _ = c.cap.read()
+    ret = getFrame()
     if ret:
         logging.debug("\tFirst frame captured")
         logging.debug("\tArming drone...")
@@ -100,13 +94,7 @@ def UpdateHelp():
     cleanup()
 
 def Update():
-    ret = False
-    if c.virtualCam:
-        getVirtualFrame()
-        if c.image is not None:
-            ret = True
-    else:
-        ret, c.image = c.cap.read()
+    ret = getFrame()
     if not ret:
         log("Error: failed to capture image")
         c.running = False
@@ -213,7 +201,7 @@ if __name__ == "__main__":
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
     if args.virt:
-        c.virtualCam = True
+        c.virtual = True
 
     logging.getLogger('PIL').setLevel(logging.WARNING)
     logging.debug("\tVerbose mode")

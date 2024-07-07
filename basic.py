@@ -37,7 +37,7 @@ def cleanup():
     Disarm()
 
     logging.debug("\tDrone disarmed")
-    if not c.virtualCam:
+    if not c.virtual:
         logging.debug("\tReleasing camera...")
         c.cap.release()
         cv.destroyAllWindows()

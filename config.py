@@ -161,7 +161,7 @@ class Config:
 
     startTime = None
 
-    virtualCam = False
+    virtual = False
     virtCamMemory = None
     virtCamMapFile = None
 

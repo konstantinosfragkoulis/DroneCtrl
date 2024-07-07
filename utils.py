@@ -398,14 +398,14 @@ def findContour(image, *colors):
         return None, None
 
 @safeCall
-def getVirtualFrame():
-    if c.virtualCam:
+def getFrame():
+    if c.virtual:
         c.virtCamMapFile.seek(0)
         data = c.virtCamMapFile.read(640 * 480 * 3)
         img = np.frombuffer(data, dtype=np.uint8)
         c.image = np.copy(np.flipud(img.reshape((480, 640, 3))))
         c.image[:, :, [0, 2]] = c.image[:, :, [2, 0]]
-        return c.image
+        return (c.image is not None)
     else:
-        c.image = None
-        return
+        ret, c.image = c.cap.read()
+        return ret
