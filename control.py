@@ -104,6 +104,10 @@ def followHoops():
     print("Center: ", center)
 
 @safeCall
+def _getAngle(prevX, x, curAngle):
+    return remap_range(x, 0, 640, -60, 60)/MAX_ANGULAR_ACCELERATION
+
+@safeCall
 def followTarget(*colors):
     """Follow the biggest object of the specified color(s)."""
     c.forward = 0.05
@@ -115,15 +119,13 @@ def followTarget(*colors):
     if center is None:
         return
     else:
+        c.fd.accelW = _getAngle(c.fd.centerX, center[1], c.fd.accelW)
         if c.timer == 0:
             c.fd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
-            c.fd.accelW = remap_range(center[1], 0, 640, -60, 60)/MAX_ANGULAR_ACCELERATION
         elif c.timer < STABILIZED_HOVER_STEP_DURATIOND2:
-            c.fd.accelW = remap_range(center[1], 0, 640, -60, 60)/MAX_ANGULAR_ACCELERATION
             c.vertical = c.fd.accelZ
             c.angle = c.fd.accelW
         elif c.timer < STABILIZED_HOVER_STEP_DURATION:
-            c.fd.accelW = remap_range(center[1], 0, 640, -60, 60)/MAX_ANGULAR_ACCELERATION
             c.vertical = -c.fd.accelZ
             c.angle = c.fd.accelW
         else:
@@ -132,6 +134,9 @@ def followTarget(*colors):
             c.fd.accelW = remap_range(center[1], 0, 640, -60, 60)/MAX_ANGULAR_ACCELERATION
             log(f"New accelZ: {c.fd.accelZ}, New accelW: {c.fd.accelW}")
 
+
+        c.fd.centerY = center[0]
+        c.fd.centerX = center[1]
         log("\n\n")
         log(f"\tAngle: {c.angle}")
         log(f"\tVertical: {c.vertical}\n\n")
@@ -139,18 +144,6 @@ def followTarget(*colors):
 @safeCall
 def _getAccel2(center, mid, accel):
     if center == mid:
-        return 0
-    elif center > mid:
-        return -accel
-    else:
-        return accel
-
-@safeCall
-def _getAccel(center, mid, accel):
-    """Get the acceleration needed to align the drone with the point
-    of reference It is used in the Stabilize() function that does not
-    provide smooth movement."""
-    if abs(center - mid) < STABILIZED_HOVER_DEADZONE:
         return 0
     elif center > mid:
         return -accel
@@ -236,6 +229,18 @@ def Stabilize2():
         log(f"h: {c.hd2.h}, d: {c.hd2.d}")
         log(f"dx: {c.hd2.dx}, dy: {c.hd2.dy} dxPx: {c.hd2.dxPx}, dyPx: {c.hd2.dyPx}")
         log(f"AccelX: {c.hd2.accelX}, AccelY: {c.hd2.accelY}")
+
+@safeCall
+def _getAccel(center, mid, accel):
+    """Get the acceleration needed to align the drone with the point
+    of reference It is used in the Stabilize() function that does not
+    provide smooth movement."""
+    if abs(center - mid) < STABILIZED_HOVER_DEADZONE:
+        return 0
+    elif center > mid:
+        return -accel
+    else:
+        return accel
 
 @safeCall
 def Stabilize():

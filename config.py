@@ -36,6 +36,8 @@ STABILIZED_HOVER_STEP_ACCELERATION_Y = 0.5 # m/s^2
 STABILIZED_HOVER_STEP_ACCELERATION_Z = 1 # m/s^2
 STABILIZED_HOVER_STEP_DURATION = 1.5 # s
 STABILIZED_HOVER_DEADZONE = 10 # pixels
+
+OBJECT_TRACKING_DEADZONE = 10 # pixels
 #################################################################
 ################  USER EDITABLE VARIABLES - END  ################
 #################################################################
@@ -105,6 +107,8 @@ class FlightData:
     accelX: float
     accelZ: float
     accelW: float
+    centerY: int
+    centerX: int
 
 
 class Config:
@@ -171,4 +175,4 @@ class Config:
 
     timer = 0
     hd2 = StablizedHoverData2(0, 0, 0, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    fd = FlightData(0, 0, 0, 0)
+    fd = FlightData(0, 0, 0, 0, 0, 0)
