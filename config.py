@@ -35,7 +35,7 @@ VERTICAL_ACCELERATION_OFFSET = 0.52 # The drone hovers at this acceleration
 STABILIZED_HOVER_STEP_ACCELERATION_Y = 0.5 # m/s^2
 STABILIZED_HOVER_STEP_ACCELERATION_Z = 1 # m/s^2
 STABILIZED_HOVER_STEP_DURATION = 1.5 # s
-STABILIZED_HOVER_DEADZONE = 20 # pixels
+STABILIZED_HOVER_DEADZONE = 10 # pixels
 #################################################################
 ################  USER EDITABLE VARIABLES - END  ################
 #################################################################
@@ -100,9 +100,11 @@ class StablizedHoverData2:
     dx: float
 
 @dataclass
-class StablizedHoverData:
+class FlightData:
     accelY: float
     accelX: float
+    accelZ: float
+    accelW: float
 
 
 class Config:
@@ -167,6 +169,6 @@ class Config:
 
     debugInfo = None
 
-    stabilizedHoverTime = 0
+    timer = 0
     hd2 = StablizedHoverData2(0, 0, 0, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    hd = StablizedHoverData(0, 0)
+    fd = FlightData(0, 0, 0, 0)

@@ -1,4 +1,3 @@
-
 from enum import Enum
 import cv2 as cv
 from nptyping import NDArray

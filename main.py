@@ -143,6 +143,7 @@ def Update():
                 log("Landing...")
             elif keyPressed == ord('f'):
                 c.flyingState = FlyingState.FollowingObject
+                c.timer = 0
                 log("Following object")
             elif keyPressed == ord('h'):
                 c.flyingState = FlyingState.Hovering
@@ -152,7 +153,7 @@ def Update():
                 log("Flying forward")
             elif keyPressed == ord('a'):
                 c.flyingState = FlyingState.StabilizedHover
-                c.stabilizedHoverTime = 0
+                c.timer = 0
                 log("Stabilized hover")
             
 
@@ -161,11 +162,12 @@ def Update():
                 Hover()
             elif c.flyingState == FlyingState.FollowingObject:
                 followTarget(BLUE)
+                c.timer += c.dt
             elif c.flyingState == FlyingState.FlyingForward:
                 flyForward()
             elif c.flyingState == FlyingState.StabilizedHover:
                 Stabilize()
-                c.stabilizedHoverTime += c.dt
+                c.timer += c.dt
 
         elif c.state == State.Landing:
             if c.landingCnt < LANDING_TIME1:
