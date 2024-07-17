@@ -1,17 +1,6 @@
 import cv2 as cv
-import numpy as np
-
-import mmap
-import posix_ipc
-import struct
-
-import signal
-
-import argparse
 import logging
-
 import time
-
 from typing import *
 
 from config import *
@@ -21,66 +10,25 @@ from conversions import *
 from basic import *
 from control import *
 from takeoff import *
+from init import *
 
 
 def Awake():
     """Initialization function that is called first even before Start()"""
     print("Program started")
-    logging.debug("\tInitializing signal handlers...")
-
-    for sig in signals_to_handle:
-        signal.signal(sig, handle_signal)
-
-    logging.debug("\tSignal handlers initialized")
+    initSignalHandlers()
 
 def Start():
     """Initialization function that is called once when the program starts."""
+    initSharedMemory()
+    initCamera()
     
-    logging.debug("\tInitializing shared memory...")
-    c.memory = posix_ipc.SharedMemory("/myshm")
-    c.mapFile = mmap.mmap(c.memory.fd, c.memory.size)
-    c.values = struct.unpack('i'*16, c.mapFile.read(64))
-    
-    logging.debug("\tShared memory initialized")
-    if c.virtual:
-        logging.debug("\tInitializing virtual camera...")
-        
-        size = 640 * 480 * 3
-
-        c.virtCamMemory = posix_ipc.SharedMemory("/myVirtCamMem", posix_ipc.O_CREAT, size=size)
-        c.virtCamMapFile = mmap.mmap(c.virtCamMemory.fd, size)
-        c.image = np.zeros((480, 640, 3), dtype=np.uint8)
-
-        logging.debug("\tVirtual camera initialized")
-    else:
-        logging.debug("\tInitializing camera...")
-        
-        c.cap = cv.VideoCapture("/dev/video0")
-        
-        logging.debug("\tCamera initialized")
     logging.debug("\tDisarming drone...")
 
     Disarm()
-    c.state = State.Disarmed
 
     logging.debug("\tDrone disarmed")
-    logging.debug("\tGetting first frame...")
-
-    ret = getFrame()
-    if ret:
-        logging.debug("\tFirst frame captured")
-        logging.debug("\tArming drone...")
-        Arm()
-        c.state = State.Grounded
-        logging.debug("\tDrone armed")
-        CalculateTakeoff(TAKEOFF_HEIGHT, TAKEOFF_TIME)
-        CalculateLanding()
-        print("\nDrone initialized!\n\n\n")
-    else:
-        print("Failed to get first frame!\nThere is a problem with the camera")
-        print("Cleaning up...")
-        cleanup()
-        return
+    getFirstFrame()
 
 def UpdateHelp():
     initialTime = time.perf_counter()
@@ -88,8 +36,9 @@ def UpdateHelp():
         c.debugInfo = ""
         Update()
 
-        c.dt = time.perf_counter() - initialTime
-        initialTime = time.perf_counter()
+        currentTime = time.perf_counter()
+        c.dt = currentTime - initialTime
+        initialTime = currentTime
     
     cleanup()
 
@@ -117,7 +66,6 @@ def Update():
                 log("Taking off...")
             elif keyPressed == ord('r'):
                 Disarm()
-                c.state = State.Disarmed
                 log("Disarmed")
             else:
                 ZeroThrottle()
@@ -194,19 +142,7 @@ def Update():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="A program that controls a drone and makes it autonomous."
-    )
-    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
-    parser.add_argument("--virt", help="use virtual camera", action="store_true")
-    args = parser.parse_args()
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-    if args.virt:
-        c.virtual = True
-
-    logging.getLogger('PIL').setLevel(logging.WARNING)
-    logging.debug("\tVerbose mode")
+    initArgumentParser()
     Awake()
     Start()
     UpdateHelp()

@@ -2,6 +2,8 @@ import signal
 from enum import IntEnum
 from dataclasses import dataclass
 
+VERSION_NUMBER = "0.0.1a"
+
 #################################################################
 ##################  PHYSICS CONSTANTS - START  ##################
 #################################################################
@@ -38,6 +40,10 @@ STABILIZED_HOVER_STEP_DURATION = 1.5 # s
 STABILIZED_HOVER_DEADZONE = 10 # pixels
 
 OBJECT_TRACKING_DEADZONE = 10 # pixels
+
+VIRTUAL_IMAGE_SIZE_X = 640
+VIRTUAL_IMAGE_SIZE_Y = 480
+VIRTUAL_IMAGE_SIZE_Z = 3
 #################################################################
 ################  USER EDITABLE VARIABLES - END  ################
 #################################################################
@@ -49,6 +55,8 @@ TAKEOFF_TIME1 = 2 * TAKEOFF_TIME / 3
 TAKEOFF_TIME2 = TAKEOFF_TIME / 3
 WEIGHT = MASS * G
 LANDING_TIME1 = LANDING_TIME / 3
+
+VIRTUAL_IMAGE_SIZE = VIRTUAL_IMAGE_SIZE_X * VIRTUAL_IMAGE_SIZE_Y * VIRTUAL_IMAGE_SIZE_Z
 
 CAM_WIDTH = 640
 CAM_HEIGHT = 480
@@ -107,8 +115,6 @@ class FlightData:
     accelX: float
     accelZ: float
     accelW: float
-    centerY: int
-    centerX: int
 
 
 class Config:
@@ -175,4 +181,4 @@ class Config:
 
     timer = 0
     hd2 = StablizedHoverData2(0, 0, 0, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    fd = FlightData(0, 0, 0, 0, 0, 0)
+    fd = FlightData(0, 0, 0, 0)

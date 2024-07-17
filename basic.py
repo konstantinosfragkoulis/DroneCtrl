@@ -25,16 +25,11 @@ def cleanup():
     c.vertical = -10
     c.angle = 0
 
-
     print("Program stopped running")
     logging.debug("\tDisarming...")
 
-    from control import control
-    control()
-    sleep(0.2)
-
-    c.state = State.Disarmed
     Disarm()
+    c.state = State.Disarmed # Not necessary
 
     logging.debug("\tDrone disarmed")
     if not c.virtual:
@@ -84,13 +79,7 @@ def Disarm():
     """Disarms the drone by lowering the throttle to the minimum value
     and setting AUX1 to low."""
     passValues(0, 0, 0, -32768, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
-@safeCall
-def ZeroThrottle():
-    """Sets the throttle to the minimum value, with the drone still armed."""
-    c.forward = 0
-    c.angle = 0
-    c.vertical = -10
+    c.state = State.Disarmed
 
 @safeCall
 def log(*strings):

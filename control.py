@@ -1,11 +1,16 @@
-import logging
-from basic import cleanup, passValues, log
+from basic import safeCall, log, cleanup, passValues
 from config import *
 from config import Config as c
 from conversions import *
 from utils import *
-from basic import safeCall
 import cv2 as cv
+
+@safeCall
+def ZeroThrottle():
+    """Sets the throttle to the minimum value, with the drone still armed."""
+    c.forward = 0
+    c.angle = 0
+    c.vertical = -10
 
 @safeCall
 def control():
@@ -104,7 +109,7 @@ def followHoops():
     print("Center: ", center)
 
 @safeCall
-def _getAngle(prevX, x, curAngle):
+def _getAngle(x):
     return remap_range(x, 0, 640, -60, 60)/MAX_ANGULAR_ACCELERATION
 
 @safeCall
@@ -119,7 +124,7 @@ def followTarget(*colors):
     if center is None:
         return
     else:
-        c.fd.accelW = _getAngle(c.fd.centerX, center[1], c.fd.accelW)
+        c.fd.accelW = _getAngle(center[1])
         if c.timer == 0:
             c.fd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
         elif c.timer < STABILIZED_HOVER_STEP_DURATIOND2:
@@ -134,9 +139,6 @@ def followTarget(*colors):
             c.fd.accelW = remap_range(center[1], 0, 640, -60, 60)/MAX_ANGULAR_ACCELERATION
             log(f"New accelZ: {c.fd.accelZ}, New accelW: {c.fd.accelW}")
 
-
-        c.fd.centerY = center[0]
-        c.fd.centerX = center[1]
         log("\n\n")
         log(f"\tAngle: {c.angle}")
         log(f"\tVertical: {c.vertical}\n\n")
