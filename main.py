@@ -103,6 +103,10 @@ def Update():
                 c.flyingState = FlyingState.StabilizedHover
                 c.timer = 0
                 log("Stabilized hover")
+            elif keyPressed == ord('p'):
+                c.flyingState = FlyingState.StabilizedHoverPreview
+                c.timer = 0
+                log("Stabilized hover preview")
             
 
             if c.flyingState == FlyingState.Hovering:
@@ -115,6 +119,9 @@ def Update():
                 flyForward()
             elif c.flyingState == FlyingState.StabilizedHover:
                 Stabilize()
+                c.timer += c.dt
+            elif c.flyingState == FlyingState.StabilizedHoverPreview:
+                Stabilize(True)
                 c.timer += c.dt
 
         elif c.state == State.Landing:

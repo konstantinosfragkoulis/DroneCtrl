@@ -41,7 +41,10 @@ def control():
 
     c.a_x = c.forward*MAX_FORWARD_ACCELERATION
     c.a_y = c.sideways*MAX_SIDEWAYS_ACCELERATION
-    c.a_z = (c.vertical+VERTICAL_ACCELERATION_OFFSET)*MAX_VERTICAL_ACCELERATION
+    if c.virtual:
+        c.a_z = (c.vertical+VERTICAL_ACCELERATION_OFFSET_SIM)*MAX_VERTICAL_ACCELERATION
+    else:
+        c.a_z = (c.vertical+VERTICAL_ACCELERATION_OFFSET)*MAX_VERTICAL_ACCELERATION
     c.w_y = c.angle*MAX_ANGULAR_ACCELERATION
 
     c.ThrustXZ = 0
@@ -245,7 +248,7 @@ def _getAccel(center, mid, accel):
         return accel
 
 @safeCall
-def Stabilize():
+def Stabilize(preview=False):
     """Align the drone with the point of reference and stabilize it.
     The movement is *not* smooth."""
     c.forward = 0
@@ -261,11 +264,13 @@ def Stabilize():
             c.fd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
             c.fd.accelX = _getAccel(center[1], CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATION_YD2)
         elif c.timer < STABILIZED_HOVER_STEP_DURATIOND2:
-            c.sideways = c.fd.accelX
-            c.vertical = c.fd.accelZ
+            if not preview:
+                c.sideways = c.fd.accelX
+                c.vertical = c.fd.accelZ
         elif c.timer < STABILIZED_HOVER_STEP_DURATION:
-            c.sideways = -c.fd.accelX
-            c.vertical = -c.fd.accelZ
+            if not preview:
+                c.sideways = -c.fd.accelX
+                c.vertical = -c.fd.accelZ
         else:
             c.timer = 0.0001
             c.fd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)

@@ -32,7 +32,8 @@ MAX_SIDEWAYS_ACCELERATION = 2 # m/s^2
 MAX_VERTICAL_ACCELERATION = 2 # m/s^2
 MAX_ANGULAR_ACCELERATION = 90 # degrees/s^2
 
-VERTICAL_ACCELERATION_OFFSET = 0.52 # The drone hovers at this acceleration
+VERTICAL_ACCELERATION_OFFSET = 0.53 # The drone hovers at this acceleration
+VERTICAL_ACCELERATION_OFFSET_SIM = 0.52 # The drone hovers at this acceleration
 
 STABILIZED_HOVER_STEP_ACCELERATION_Y = 0.5 # m/s^2
 STABILIZED_HOVER_STEP_ACCELERATION_Z = 1 # m/s^2
@@ -91,6 +92,7 @@ class FlyingState(IntEnum):
     FollowingObject = 1
     FlyingForward = 2
     StabilizedHover = 3
+    StabilizedHoverPreview = 4
 
 @dataclass
 class StablizedHoverData2:

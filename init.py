@@ -43,7 +43,7 @@ def initCamera():
     else:
         logging.debug("\tInitializing camera...")
         
-        c.cap = cv.VideoCapture("/dev/video0")
+        c.cap = cv.VideoCapture("/dev/video2")
         
         logging.debug("\tCamera initialized")
 
