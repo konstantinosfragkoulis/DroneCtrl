@@ -121,7 +121,7 @@ def Update():
                 Stabilize()
                 c.timer += c.dt
             elif c.flyingState == FlyingState.StabilizedHoverPreview:
-                Stabilize(True)
+                Stabilize(preview=True)
                 c.timer += c.dt
 
         elif c.state == State.Landing:

@@ -13,6 +13,31 @@ def ZeroThrottle():
     c.vertical = -10
 
 @safeCall
+def applyRotation():
+    """Rotate the drone to the desired angles."""
+    if abs(c.Theta - c.fd.pitch) > 0.1:
+        tmp = (c.Theta-c.fd.pitch) / TIME_TO_ROTATE
+        log("Pitch speed: ", str(tmp))
+        c.pitch = degPerSecToInt(tmp)
+        c.fd.pitch += tmp * c.dt
+        log("Current pitch: ", str(c.fd.pitch))
+
+    if abs(c.Phi - c.fd.roll) > 0.1:
+        tmp = (c.Phi - c.fd.roll) / TIME_TO_ROTATE
+        log("Roll speed: ", str(tmp))
+        c.roll = degPerSecToInt(tmp)
+        c.fd.roll += tmp * c.dt
+        log("Current roll: ", str(c.fd.roll))
+
+    if abs(c.w_y - c.fd.yaw) > 0.1:
+        tmp = (c.w_y - c.fd.yaw) / TIME_TO_ROTATE
+        log("Yaw speed: ", str(tmp))
+        c.yaw = degPerSecToInt(tmp)
+        c.fd.yaw += tmp * c.dt
+        log("Current yaw: ", str(c.fd.yaw))
+        
+
+@safeCall
 def control():
     """Convert the forward, angle, vertical, and sideways values to pitch,
     yaw, roll and throttle values and pass them to the drone."""
@@ -47,8 +72,6 @@ def control():
         c.a_z = (c.vertical+VERTICAL_ACCELERATION_OFFSET)*MAX_VERTICAL_ACCELERATION
     c.w_y = c.angle*MAX_ANGULAR_ACCELERATION
 
-    c.ThrustXZ = 0
-    c.ThrustYZ = 0
     c.Theta = 0
     c.Phi = 0
 
@@ -72,14 +95,11 @@ def control():
         c.throttleCRSF = RPMtoThrottleCRSF(c.rpm)
         c.throttle = CRSFtoInt(c.throttleCRSF)
 
-        c.yaw = degPerSecToInt(c.w_y)
-        c.pitch = degPerSecToInt(c.Theta)
-        c.roll = degPerSecToInt(c.Phi)
-        # We are flying in ANGLE mode, which means that the stick
-        # position is the pitch of the drone, not the acceleration
-        # of the pitch. Thus, degrees per second is not actually
-        # degrees per second, but rather just degrees.
-        # The same applies to roll.
+        applyRotation()
+
+        # c.yaw = degPerSecToInt(c.w_y)
+        # c.pitch = degPerSecToInt(c.Theta)
+        # c.roll = degPerSecToInt(c.Phi)
 
     passValues(c.yaw, c.pitch, c.roll, c.throttle, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
@@ -92,7 +112,7 @@ def Hover():
 
 @safeCall
 def flyForward():
-    c.forward = 0.05
+    c.forward = 0.5
     c.sideways = 0
     c.vertical = 0
     c.angle = 0
@@ -118,7 +138,7 @@ def _getAngle(x):
 @safeCall
 def followTarget(*colors):
     """Follow the biggest object of the specified color(s)."""
-    c.forward = 0.05
+    c.forward = 0.25
     c.sideways = 0
     c.vertical = 0
     c.angle = 0
@@ -127,113 +147,24 @@ def followTarget(*colors):
     if center is None:
         return
     else:
-        c.fd.accelW = _getAngle(center[1])
+        c.sd.accelW = _getAngle(center[1])
         if c.timer == 0:
-            c.fd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
+            c.sd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
         elif c.timer < STABILIZED_HOVER_STEP_DURATIOND2:
-            c.vertical = c.fd.accelZ
-            c.angle = c.fd.accelW
+            c.vertical = c.sd.accelZ
+            c.angle = c.sd.accelW
         elif c.timer < STABILIZED_HOVER_STEP_DURATION:
-            c.vertical = -c.fd.accelZ
-            c.angle = c.fd.accelW
+            c.vertical = -c.sd.accelZ
+            c.angle = c.sd.accelW
         else:
             c.timer = 0.0001
-            c.fd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
-            c.fd.accelW = remap_range(center[1], 0, 640, -60, 60)/MAX_ANGULAR_ACCELERATION
-            log(f"New accelZ: {c.fd.accelZ}, New accelW: {c.fd.accelW}")
+            c.sd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
+            c.sd.accelW = remap_range(center[1], 0, 640, -60, 60)/MAX_ANGULAR_ACCELERATION
+            log(f"New accelZ: {c.sd.accelZ}, New accelW: {c.sd.accelW}")
 
         log("\n\n")
         log(f"\tAngle: {c.angle}")
         log(f"\tVertical: {c.vertical}\n\n")
-
-@safeCall
-def _getAccel2(center, mid, accel):
-    if center == mid:
-        return 0
-    elif center > mid:
-        return -accel
-    else:
-        return accel
-
-@safeCall
-def Stabilize2():
-    """Smoothly align the drone with the point of reference and stabilize it.
-    This does not work yet."""
-    c.forward = 0
-    c.sideways = 0
-    c.vertical = 0
-    c.angle = 0
-
-    contour, center = findContour(c.image, BLUE)
-    if center is None:
-        return
-    else:
-        if c.timer == 0:
-            c.hd2.centerY = center[0]
-            c.hd2.centerX = center[1]
-
-            c.hd2.accelY = _getAccel2(c.hd2.centerY, CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
-            c.hd2.accelX = _getAccel2(c.hd2.centerX, CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATION_YD2)
-
-        if c.timer < STABILIZED_HOVER_STEP_DURATIOND2:
-            c.sideways = c.hd2.accelX
-            c.vertical = c.hd2.accelY
-        elif c.timer < STABILIZED_HOVER_STEP_DURATION:
-            c.sideways = -c.hd2.accelX
-            c.vertical = -c.hd2.accelY
-            log(c.hd2.adjustedHoverData)
-        elif not c.hd2.adjustedHoverData:
-            c.hd2.dCenterY = abs(CAM_HEIGHTD2 - center[0])
-            c.hd2.dCenterX = abs(CAM_WIDTHD2 - center[1])
-            c.hd2.adjustedHoverData = True
-
-            c.hd2.dy = (c.hd2.accelY*MAX_VERTICAL_ACCELERATION) * (STABILIZED_HOVER_STEP_DURATIOND2**2)
-            c.hd2.dx = (c.hd2.accelX*MAX_SIDEWAYS_ACCELERATION) * (STABILIZED_HOVER_STEP_DURATIOND2**2)
-
-            print(f"accelY: {c.hd2.accelY}, accelX: {c.hd2.accelX}")
-            print(f"Actual accelY: {c.hd2.accelY*MAX_VERTICAL_ACCELERATION}, Actual accelX: {c.hd2.accelX*MAX_SIDEWAYS_ACCELERATION}")
-            print(f"duration: {STABILIZED_HOVER_STEP_DURATION}")
-            print("dx: ", c.hd2.dx, " dy: ", c.hd2.dy)
-
-            c.hd2.dyPx = abs(c.hd2.centerY - center[0])
-            c.hd2.dxPx = abs(c.hd2.centerX - center[1])
-
-            print("dyPx: ", c.hd2.dyPx, " dxPx: ", c.hd2.dxPx)
-            print("dCenterY: ", c.hd2.dCenterY, " dCenterX: ", c.hd2.dCenterX)
-
-            if c.hd2.dy == 0 or c.hd2.dyPx == 0:
-                c.hd2.h = 0
-            else:
-                c.hd2.h = ((c.hd2.dCenterY * c.hd2.dy) / c.hd2.dyPx) * (-1 if c.hd2.accelY < 0 else 1)
-            
-            if c.hd2.dx == 0 or c.hd2.dxPx == 0:
-                c.hd2.d = 0
-            else:
-                c.hd2.d = ((c.hd2.dCenterX * c.hd2.dx) / c.hd2.dxPx) * (-1 if c.hd2.accelX < 0 else 1)
-
-            c.hd2.stabilizationDuration = PI + STABILIZED_HOVER_STEP_DURATION
-
-            print("d: ", c.hd2.d, " h: ", c.hd2.h)
-
-        elif c.timer < c.hd2.stabilizationDuration:
-            log(c.hd2.adjustedHoverData)
-
-            c.sideways = math.sin(c.timer-STABILIZED_HOVER_STEP_DURATION + 3*PI/2) * c.hd2.d/(2*MAX_SIDEWAYS_ACCELERATION)
-            c.vertical = -math.sin(c.timer-STABILIZED_HOVER_STEP_DURATION + 3*PI/2) * c.hd2.h/(2*MAX_VERTICAL_ACCELERATION)
-
-        else:
-            log("Drone Stabilized")
-            #c.timer = 0
-            #c.hd2 = StablizedHoverData2(0, 0, 0, 0, False, 0, 0, 0, 0, 0)
-
-        c.angle = 0
-        
-        log(f"\nCenter: {center}")
-        log(f"Vertical: {c.vertical}")
-        log(f"Sideways: {c.sideways}, Vertical: {c.vertical}")
-        log(f"h: {c.hd2.h}, d: {c.hd2.d}")
-        log(f"dx: {c.hd2.dx}, dy: {c.hd2.dy} dxPx: {c.hd2.dxPx}, dyPx: {c.hd2.dyPx}")
-        log(f"AccelX: {c.hd2.accelX}, AccelY: {c.hd2.accelY}")
 
 @safeCall
 def _getAccel(center, mid, accel):
@@ -261,23 +192,23 @@ def Stabilize(preview=False):
         return
     else:
         if c.timer == 0:
-            c.fd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
-            c.fd.accelX = _getAccel(center[1], CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATION_YD2)
+            c.sd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
+            c.sd.accelX = _getAccel(center[1], CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATION_YD2)
         elif c.timer < STABILIZED_HOVER_STEP_DURATIOND2:
             if not preview:
-                c.sideways = c.fd.accelX
-                c.vertical = c.fd.accelZ
+                c.sideways = c.sd.accelX
+                c.vertical = c.sd.accelZ
         elif c.timer < STABILIZED_HOVER_STEP_DURATION:
             if not preview:
-                c.sideways = -c.fd.accelX
-                c.vertical = -c.fd.accelZ
+                c.sideways = -c.sd.accelX
+                c.vertical = -c.sd.accelZ
         else:
             c.timer = 0.0001
-            c.fd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
-            c.fd.accelX = _getAccel(center[1], CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATION_YD2)
-            log(f"New accelX: {c.fd.accelX}, New accelZ: {c.fd.accelZ}")
+            c.sd.accelZ = _getAccel(center[0], CAM_HEIGHTD2, STABILIZED_HOVER_STEP_ACCELERATION_ZD2)
+            c.sd.accelX = _getAccel(center[1], CAM_WIDTHD2, STABILIZED_HOVER_STEP_ACCELERATION_YD2)
+            log(f"New accelX: {c.sd.accelX}, New accelZ: {c.sd.accelZ}")
         
-        log(f"accelX: {c.fd.accelX}, accelZ: {c.fd.accelZ}")
+        log(f"accelX: {c.sd.accelX}, accelZ: {c.sd.accelZ}")
         log(f"Sideways: {c.sideways}, Vertical: {c.vertical}")
         log(f"Center: {center}")
         log(f"hoverTime: {c.timer}")

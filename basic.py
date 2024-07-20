@@ -40,7 +40,8 @@ def cleanup():
 
     logging.debug("\tClosing shared memory...")
 
-    c.mapFile.close()
+    if c.mapFile is not None:
+        c.mapFile.close()
     
     logging.debug("\tShared memory closed")
     print("Exiting...")

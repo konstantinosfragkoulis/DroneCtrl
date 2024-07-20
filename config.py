@@ -22,7 +22,7 @@ DEG_TO_RAD = 180/PI
 #################################################################
 ###############  USER EDITABLE VARIABLES - START  ###############
 #################################################################
-TAKEOFF_TIME = 0.6 # The time it takes for the drone to take off
+TAKEOFF_TIME = 0.8 # The time it takes for the drone to take off
 TAKEOFF_HEIGHT = 0.1 # The height the drone will take off to in meters
 MASS = 0.31 # The mass of the drone in kg
 LANDING_TIME = 3 # The drone will be descending for this time
@@ -45,9 +45,15 @@ OBJECT_TRACKING_DEADZONE = 10 # pixels
 VIRTUAL_IMAGE_SIZE_X = 640
 VIRTUAL_IMAGE_SIZE_Y = 480
 VIRTUAL_IMAGE_SIZE_Z = 3
+
+TIME_TO_ROTATE = 0.5 # s
 #################################################################
 ################  USER EDITABLE VARIABLES - END  ################
 #################################################################
+
+
+
+
 
 STABILIZED_HOVER_STEP_DURATIOND2 = STABILIZED_HOVER_STEP_DURATION / 2
 STABILIZED_HOVER_STEP_ACCELERATION_YD2 = STABILIZED_HOVER_STEP_ACCELERATION_Y / 2
@@ -95,29 +101,21 @@ class FlyingState(IntEnum):
     StabilizedHoverPreview = 4
 
 @dataclass
-class StablizedHoverData2:
-    centerY: int
-    centerX: int
-    dCenterY: int
-    dCenterX: int
-    adjustedHoverData:bool
-    d: float
-    h: float
-    accelY: float
-    accelX: float
-    stabilizationDuration: float
-    dyPx: int
-    dxPx: int
-    dy: float
-    dx: float
-
-@dataclass
-class FlightData:
+class StabilizedData:
     accelY: float
     accelX: float
     accelZ: float
     accelW: float
 
+# The current yaw, pitch, and roll of the drone
+# Used for flying in acro mode
+@dataclass
+class FlightData:
+    yaw: float
+    pitch: float
+    roll: float
+
+    turnTimer: float = 0
 
 class Config:
     state = State.Disarmed
@@ -182,5 +180,5 @@ class Config:
     debugInfo = None
 
     timer = 0
-    hd2 = StablizedHoverData2(0, 0, 0, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    sd = StabilizedData(0, 0, 0, 0)
     fd = FlightData(0, 0, 0, 0)
