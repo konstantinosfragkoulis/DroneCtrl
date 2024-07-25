@@ -23,32 +23,23 @@ def ThrustToRPM(thrust: float):
 @safeCall
 def RPMtoThrottleCRSF(rpm: int):
     """Converts the RPM of a motor to a CRSF throttle value [1000, 2000]."""
-    if rpm < 0 or rpm > 47000:
-        print(f"\tInvalid value {rpm}. Must be between 0 and 47000.")
-        cleanup()
-        return
+    
     return int(0.02080581*rpm + 971.4899)
 
-const8 = 65535 / 1000
-const9 = 32768
+const7 = 65535 / 1000
+const8 = 32768
 @safeCall
 def CRSFtoInt(value: int):
     """Converts from CRSF [1000, 2000] to int16 [-32768, 32767]."""
-    if value > 2000 or value < 1000:
-        print(f"\tInvalid value {value}. Must be between 1000 and 2000.")
-        cleanup()
-        return
-    return int(((value - 1000) * const8) - const9)
+    
+    return int(((value - 1000) * const7) - const8)
 
 const3 = 1000 / 65535
 const4 = 1000 + (32768 * const3)
 @safeCall             
 def intToCRSF(value: int):
     """Converts from int16 [-32768, 32767] to CRSF [1000, 2000]."""
-    if value > 32767 or value < -32768:
-        print(f"\tInvalid value {value}. Must be between -32768 and 32767.")
-        cleanup()
-        return
+    
     return int((value * const3) + const4)
 
 const5 = 360/(32767+32768)

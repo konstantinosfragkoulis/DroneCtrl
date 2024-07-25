@@ -100,15 +100,15 @@ def control():
         c.rpm = ThrustToRPM(c.Thrust/4) # Thrust per motor
         c.throttleCRSF = RPMtoThrottleCRSF(c.rpm)
         c.throttle = CRSFtoInt(c.throttleCRSF)
+        # applyRotation()
 
-        applyRotation()
-
-        # c.yaw = degPerSecToInt(c.w_y)
-        # c.pitch = degPerSecToInt(c.Theta)
-        # c.roll = degPerSecToInt(c.Phi)
+        c.yaw = degPerSecToInt(c.w_y)
+        c.pitch = degPerSecToInt(c.Theta)
+        c.roll = degPerSecToInt(c.Phi)
 
 
     log(f"Yaw: {c.yaw}, Pitch: {c.pitch}, Roll: {c.roll}, Throttle: {c.throttle}")
+    log(f"Thrust: {c.Thrust}, RPM: {c.rpm}")
     passValues(c.yaw, c.pitch, c.roll, c.throttle, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 @safeCall
