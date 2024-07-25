@@ -16,11 +16,13 @@ def ZeroThrottle():
 def applyRotation():
     """Rotate the drone to the desired angles."""
     if abs(c.Theta - c.fd.pitch) > 0.1:
-        tmp = (c.Theta-c.fd.pitch) / TIME_TO_ROTATE
+        tmp = (c.Theta - c.fd.pitch) / TIME_TO_ROTATE
         log("Pitch speed: ", str(tmp))
         c.pitch = degPerSecToInt(tmp)
         c.fd.pitch += tmp * c.dt
         log("Current pitch: ", str(c.fd.pitch))
+    else:
+        c.pitch = 0
 
     if abs(c.Phi - c.fd.roll) > 0.1:
         tmp = (c.Phi - c.fd.roll) / TIME_TO_ROTATE
@@ -28,6 +30,8 @@ def applyRotation():
         c.roll = degPerSecToInt(tmp)
         c.fd.roll += tmp * c.dt
         log("Current roll: ", str(c.fd.roll))
+    else:
+        c.roll = 0
 
     if abs(c.w_y - c.fd.yaw) > 0.1:
         tmp = (c.w_y - c.fd.yaw) / TIME_TO_ROTATE
@@ -35,6 +39,8 @@ def applyRotation():
         c.yaw = degPerSecToInt(tmp)
         c.fd.yaw += tmp * c.dt
         log("Current yaw: ", str(c.fd.yaw))
+    else:
+        c.yaw = 0
         
 
 @safeCall
@@ -101,6 +107,8 @@ def control():
         # c.pitch = degPerSecToInt(c.Theta)
         # c.roll = degPerSecToInt(c.Phi)
 
+
+    log(f"Yaw: {c.yaw}, Pitch: {c.pitch}, Roll: {c.roll}, Throttle: {c.throttle}")
     passValues(c.yaw, c.pitch, c.roll, c.throttle, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 @safeCall

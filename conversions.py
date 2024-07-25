@@ -1,6 +1,6 @@
 import math
 from config import PI, RHO
-from basic import safeCall
+from basic import safeCall, cleanup
 
 #################################################################
 ###############  CONVERSION FUNCTIONS - START  ##################
@@ -27,23 +27,36 @@ def RPMtoThrottleCRSF(rpm: int):
     global const3
     return int(270782500 + (-270781529.4186)/(1 + rpm**1.011358 * const3))
 
+const8 = 65535 / 1000
+const9 = 32768
 @safeCall
 def CRSFtoInt(value: int):
     """Converts from CRSF [1000, 2000] to int16 [-32768, 32767]."""
-    return int(52.88747*value - 79333.9)
-  
+    return int(((value - 1000) * const8) - const9)
+
+const4 = 1000 / 65535
+const5 = 1000 + (32768 * const4)
 @safeCall             
 def intToCRSF(value: int):
     """Converts from int16 [-32768, 32767] to CRSF [1000, 2000]."""
-    return int(0.01890788*value + 1500.051)
+    return int((value * const4) + const5)
 
+const6 = 360/(32767+32768)
 @safeCall
 def intToDegPerSec(value: int):
     """Converts Pitch, Roll, and Yaw values [-32768, 32767] to degrees per second."""
-    return 0.02534762*value + 0.02909812
+    if value > 32767 or value < -32768:
+        print(f"\tInvalid value {value}. Must be between -32768 and 32767.")
+        cleanup()
+        return
+    return const6*value
 
-const4 = 0.02909812/0.02534762
+const7 = (32767+32768)/360
 @safeCall
 def degPerSecToInt(value: float):
     """Converts degrees per second to int16 [-32768, 32767]."""
-    return int(value/0.02534762 - const4)
+    if value > 180 or value < -180:
+        print(f"\tInvalid value {value}. Must be between -180 and 180.")
+        cleanup()
+        return
+    return int(const7 * value)
