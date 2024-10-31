@@ -162,3 +162,50 @@ cython_debug/
 #.idea/
 
 log*
+
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build files
+obj/
+bin/
+
+# VS Code
+.vscode/
+
+# Python
+__pycache__/
+
+# Logs
+*.csv
